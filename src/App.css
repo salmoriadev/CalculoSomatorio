@@ -2,6 +2,8 @@
     min-height: 100vh;
     padding: 48px 6vw 72px;
     color: var(--text-primary);
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 .panel {
@@ -11,6 +13,7 @@
     padding: 28px 32px;
     box-shadow: var(--panel-shadow);
     backdrop-filter: blur(18px);
+    width: 100%;
 }
 
 .hero {
@@ -507,15 +510,17 @@ button:active {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px;
+    padding: 16px;
     z-index: 10;
 }
 
 .setup-card {
     max-width: 900px;
-    width: min(95vw, 900px);
+    width: min(100%, 900px);
     display: grid;
     gap: 20px;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .setup-grid {
@@ -582,11 +587,20 @@ button:active {
     .discipline-caret {
         justify-self: start;
     }
+
+    .course-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .course-select {
+        min-width: 100%;
+    }
 }
 
 @media (max-width: 600px) {
     .app {
-        padding: 32px 20px 56px;
+        padding: 24px 16px 48px;
     }
 
     .panel {
@@ -599,5 +613,47 @@ button:active {
 
     .footer-tip {
         text-align: left;
+    }
+
+    .hero h1 {
+        font-size: clamp(2rem, 8vw, 2.6rem);
+    }
+
+    .hero-metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .control-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .control-actions button {
+        width: 100%;
+    }
+
+    .setup-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .setup-footer button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-metrics div {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .course-meta {
+        grid-template-columns: 1fr;
+    }
+
+    .discipline-summary {
+        gap: 10px;
+        padding: 14px 16px;
     }
 }
