@@ -169,7 +169,8 @@ const CoursePanel = ({
                           <input
                             type="number"
                             min={0}
-                            value={state.questionCount}
+                            placeholder="Ex: 12"
+                            value={displayValue(state.questionCount)}
                             onChange={(event) =>
                               onDisciplineQuestionCountChange(
                                 discipline.key,
@@ -251,23 +252,6 @@ const CoursePanel = ({
                                 </header>
                                 <div className="question-inputs">
                                   <label>
-                                    Gabarito (soma correta)
-                                    <input
-                                      type="number"
-                                      min={0}
-                                      placeholder="Ex: 03"
-                                      value={displayValue(question.gabarito)}
-                                      onChange={(event) =>
-                                        onDisciplineQuestionChange(
-                                          discipline.key,
-                                          index,
-                                          "gabarito",
-                                          event.target.value,
-                                        )
-                                      }
-                                    />
-                                  </label>
-                                  <label>
                                     Candidato (soma marcada)
                                     <input
                                       type="number"
@@ -279,6 +263,23 @@ const CoursePanel = ({
                                           discipline.key,
                                           index,
                                           "candidato",
+                                          event.target.value,
+                                        )
+                                      }
+                                    />
+                                  </label>
+                                  <label>
+                                    Gabarito (soma correta)
+                                    <input
+                                      type="number"
+                                      min={0}
+                                      placeholder="Ex: 03"
+                                      value={displayValue(question.gabarito)}
+                                      onChange={(event) =>
+                                        onDisciplineQuestionChange(
+                                          discipline.key,
+                                          index,
+                                          "gabarito",
                                           event.target.value,
                                         )
                                       }

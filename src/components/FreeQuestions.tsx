@@ -37,18 +37,6 @@ const FreeQuestions = ({
             </header>
             <div className="question-inputs">
               <label>
-                Gabarito (soma correta)
-                <input
-                  type="number"
-                  min={0}
-                  placeholder="Ex: 03"
-                  value={displayValue(question.gabarito)}
-                  onChange={(event) =>
-                    onQuestionChange(index, "gabarito", event.target.value)
-                  }
-                />
-              </label>
-              <label>
                 Candidato (soma marcada)
                 <input
                   type="number"
@@ -57,6 +45,18 @@ const FreeQuestions = ({
                   value={displayValue(question.candidato)}
                   onChange={(event) =>
                     onQuestionChange(index, "candidato", event.target.value)
+                  }
+                />
+              </label>
+              <label>
+                Gabarito (soma correta)
+                <input
+                  type="number"
+                  min={0}
+                  placeholder="Ex: 03"
+                  value={displayValue(question.gabarito)}
+                  onChange={(event) =>
+                    onQuestionChange(index, "gabarito", event.target.value)
                   }
                 />
               </label>
