@@ -199,6 +199,7 @@ button:active {
     gap: 12px;
     font-size: 0.9rem;
     color: var(--text-muted);
+    width: fit-content;
 }
 
 .toggle input {
@@ -507,6 +508,7 @@ button:active {
     position: fixed;
     inset: 0;
     background: rgba(6, 8, 18, 0.82);
+    backdrop-filter: blur(6px);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -605,6 +607,7 @@ button:active {
 
     .panel {
         padding: 20px;
+        border-radius: 22px;
     }
 
     .footer {
@@ -639,6 +642,24 @@ button:active {
     .setup-footer button {
         width: 100%;
     }
+
+    .setup-overlay {
+        align-items: flex-start;
+        padding-top: 24px;
+    }
+
+    .setup-card {
+        padding: 18px;
+    }
+
+    .setup-option {
+        padding: 14px 16px;
+    }
+
+    .toggle {
+        width: 100%;
+        justify-content: flex-start;
+    }
 }
 
 @media (max-width: 480px) {
@@ -655,5 +676,9 @@ button:active {
     .discipline-summary {
         gap: 10px;
         padding: 14px 16px;
+    }
+
+    .controls {
+        grid-template-columns: 1fr;
     }
 }
