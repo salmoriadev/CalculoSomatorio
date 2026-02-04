@@ -32,7 +32,9 @@ html {
 html,
 body {
     width: 100%;
+    max-width: 100%;
     overflow-x: hidden;
+    overscroll-behavior-x: none;
 }
 
 body {
@@ -58,8 +60,8 @@ body::before,
 body::after {
     content: "";
     position: absolute;
-    width: 420px;
-    height: 420px;
+    width: min(420px, 80vw);
+    height: min(420px, 80vw);
     border-radius: 50%;
     filter: blur(0px);
     opacity: 0.18;
@@ -90,6 +92,17 @@ body::after {
 #root {
     position: relative;
     z-index: 1;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+@supports (overflow: clip) {
+    html,
+    body,
+    #root {
+        overflow-x: clip;
+    }
 }
 
 a {

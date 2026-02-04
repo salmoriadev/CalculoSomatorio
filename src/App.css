@@ -3,7 +3,9 @@
     padding: 48px 6vw 72px;
     color: var(--text-primary);
     max-width: 1200px;
+    width: min(100%, 1200px);
     margin: 0 auto;
+    overflow-x: hidden;
 }
 
 .app > * {
@@ -26,6 +28,10 @@
     gap: 32px;
     align-items: center;
     margin-bottom: 32px;
+}
+
+.hero > * {
+    min-width: 0;
 }
 
 .eyebrow {
@@ -283,6 +289,10 @@ button:active {
     flex-wrap: wrap;
 }
 
+.course-header > * {
+    min-width: 0;
+}
+
 .course-header h2 {
     font-family: var(--font-display);
     margin-bottom: 8px;
@@ -355,6 +365,10 @@ button:active {
     border-radius: 0;
     border: none;
     font-weight: 500;
+}
+
+.discipline-summary > * {
+    min-width: 0;
 }
 
 .discipline-summary:hover {
@@ -470,6 +484,10 @@ button:active {
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.course-row > * {
+    min-width: 0;
+}
+
 .course-row.alert {
     border-color: rgba(255, 120, 120, 0.5);
     box-shadow: 0 0 0 1px rgba(255, 120, 120, 0.3);
@@ -527,6 +545,7 @@ button:active {
     align-items: center;
     padding: 16px;
     z-index: 10;
+    overflow-x: hidden;
 }
 
 .setup-card {
@@ -534,7 +553,7 @@ button:active {
     width: min(100%, 900px);
     display: grid;
     gap: 20px;
-    max-height: 90vh;
+    max-height: 88vh;
     overflow-y: auto;
 }
 
@@ -691,11 +710,13 @@ button:active {
     }
 
     .setup-card {
-        padding: 16px;
+        padding: 14px;
+        gap: 16px;
+        max-height: 92vh;
     }
 
     .setup-option {
-        padding: 12px 14px;
+        padding: 10px 12px;
     }
 
     .toggle {
@@ -704,15 +725,23 @@ button:active {
     }
 
     .setup-card h1 {
-        font-size: clamp(1.6rem, 7vw, 2.2rem);
+        font-size: clamp(1.4rem, 6.5vw, 2rem);
     }
 
     .setup-card .lead {
-        font-size: 0.92rem;
+        font-size: 0.88rem;
     }
 }
 
 @media (max-width: 480px) {
+    .app {
+        padding: 16px 10px 32px;
+    }
+
+    .panel {
+        padding: 18px;
+    }
+
     .hero-metrics div {
         flex-direction: column;
         align-items: flex-start;
@@ -738,5 +767,13 @@ button:active {
 
     .setup-option {
         border-radius: 16px;
+    }
+
+    .setup-option strong {
+        font-size: 0.95rem;
+    }
+
+    .setup-option small {
+        font-size: 0.8rem;
     }
 }

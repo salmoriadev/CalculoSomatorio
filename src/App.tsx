@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import courses from "./data/courses";
 import type { DisciplineKey } from "./data/courses";
 import {
@@ -13,8 +13,17 @@ import ControlsPanel from "./components/ControlsPanel";
 import CoursePanel from "./components/CoursePanel";
 import FreeQuestions from "./components/FreeQuestions";
 import FooterSection from "./components/FooterSection";
-import type { DisciplineState, ExamMode, Question, Summary } from "./types/exam";
-import { buildDisciplineState, buildQuestions, createQuestion } from "./utils/builders";
+import type {
+  DisciplineState,
+  ExamMode,
+  Question,
+  Summary,
+} from "./types/exam";
+import {
+  buildDisciplineState,
+  buildQuestions,
+  createQuestion,
+} from "./utils/builders";
 import { clampFloat, clampInt, parseMaxProp } from "./utils/format";
 import { computeQuestionScore } from "./utils/scoring";
 import "./App.css";
@@ -50,6 +59,22 @@ function App() {
   const [useEqualWeights, setUseEqualWeights] = useState(false);
 
   const isFreeMode = examMode === "free";
+
+  useEffect(() => {
+    const { body, documentElement } = document;
+    if (setupOpen) {
+      body.style.overflow = "hidden";
+      documentElement.style.overflow = "hidden";
+    } else {
+      body.style.overflow = "";
+      documentElement.style.overflow = "";
+    }
+
+    return () => {
+      body.style.overflow = "";
+      documentElement.style.overflow = "";
+    };
+  }, [setupOpen]);
 
   const totalDisciplineQuestions = useMemo(() => {
     return OBJECTIVE_DISCIPLINES.reduce((acc, discipline) => {
@@ -124,7 +149,9 @@ function App() {
   const weightedTotal = useMemo(() => {
     if (!selectedCourse) return 0;
     return DISCIPLINES.reduce((acc, discipline) => {
-      const weight = useEqualWeights ? 1 : selectedCourse.weights[discipline.key];
+      const weight = useEqualWeights
+        ? 1
+        : selectedCourse.weights[discipline.key];
       return acc + disciplineTotals[discipline.key] * weight;
     }, 0);
   }, [selectedCourse, disciplineTotals, useEqualWeights]);
@@ -382,9 +409,7 @@ function App() {
           )
         }
         onEssayPointsChange={(value) =>
-          setEssayPoints(
-            Math.min(SCORE_LIMIT, clampFloat(value, essayPoints)),
-          )
+          setEssayPoints(Math.min(SCORE_LIMIT, clampFloat(value, essayPoints)))
         }
         onGenerateQuestions={() => regenerateQuestions()}
         onResetAnswers={handleResetAnswers}
