@@ -130,6 +130,10 @@ select {
     touch-action: manipulation;
 }
 
+input::placeholder {
+    color: rgba(235, 239, 255, 0.35);
+}
+
 button {
     touch-action: manipulation;
 }
