@@ -36,6 +36,10 @@ export const computeQuestionScore = (
       acc + ((candidato & value) > 0 && (gabarito & value) === 0 ? 1 : 0),
     0,
   );
+  const balance = npc - npi;
+  if (balance <= 0) {
+    return { raw: 0, score: 0 };
+  }
   const np = props.length;
   const raw = (np - (ntpc - (npc - npi))) / np;
   const normalized = Math.max(0, Math.min(1, raw));
