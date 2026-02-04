@@ -121,6 +121,11 @@ select {
     transition:
         border 0.2s ease,
         box-shadow 0.2s ease;
+    touch-action: manipulation;
+}
+
+button {
+    touch-action: manipulation;
 }
 
 input:focus,
@@ -650,6 +655,22 @@ button:active {
     .control-actions {
         flex-direction: column;
         width: 100%;
+    }
+
+    .panel,
+    .discipline-card,
+    .discipline-static,
+    .question-card,
+    .discipline-question {
+        contain: layout paint;
+    }
+
+    .discipline-card,
+    .discipline-static,
+    .question-card,
+    .discipline-question {
+        content-visibility: auto;
+        contain-intrinsic-size: 1px 420px;
     }
 
     .control-actions button {
