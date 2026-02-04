@@ -6,6 +6,10 @@
     margin: 0 auto;
 }
 
+.app > * {
+    width: 100%;
+}
+
 .panel {
     background: var(--panel-bg);
     border: 1px solid var(--panel-border);
@@ -63,6 +67,10 @@
     justify-content: space-between;
     align-items: center;
     font-size: 0.95rem;
+}
+
+.hero-metrics .metric-input {
+    align-items: stretch;
 }
 
 .hero-metrics strong {
@@ -525,6 +533,19 @@ button:active {
     overflow-y: auto;
 }
 
+.setup-card h1 {
+    font-size: clamp(1.8rem, 6vw, 2.6rem);
+    line-height: 1.1;
+}
+
+.setup-card .lead {
+    font-size: 0.98rem;
+}
+
+.setup-card .setup-option strong {
+    font-size: 1rem;
+}
+
 .setup-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -602,7 +623,7 @@ button:active {
 
 @media (max-width: 600px) {
     .app {
-        padding: 24px 16px 48px;
+        padding: 20px 12px 40px;
     }
 
     .panel {
@@ -649,16 +670,24 @@ button:active {
     }
 
     .setup-card {
-        padding: 18px;
+        padding: 16px;
     }
 
     .setup-option {
-        padding: 14px 16px;
+        padding: 12px 14px;
     }
 
     .toggle {
         width: 100%;
         justify-content: flex-start;
+    }
+
+    .setup-card h1 {
+        font-size: clamp(1.6rem, 7vw, 2.2rem);
+    }
+
+    .setup-card .lead {
+        font-size: 0.92rem;
     }
 }
 
@@ -680,5 +709,13 @@ button:active {
 
     .controls {
         grid-template-columns: 1fr;
+    }
+
+    .setup-card {
+        border-radius: 18px;
+    }
+
+    .setup-option {
+        border-radius: 16px;
     }
 }
