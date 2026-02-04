@@ -1,73 +1,54 @@
-# React + TypeScript + Vite
+# UFSC Summatory Calculator
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A premium, mobile-first web app to simulate the UFSC summatory scoring model. It supports official question scoring, essay and discursive sections, and course-specific weights from the UFSC 2025 unified entrance exam (UFSC/IFSC/IFC).
 
-Currently, two official plugins are available:
+## Features
+- UFSC summatory formula per question with no negative scores.
+- Proposition sums with powers of two (01, 02, 04, 08, 16, 32, 64) and open questions.
+- Three modes.
+- Final exam mode with essay and discursive sections enabled by default.
+- Mid-year mode with half the number of questions per discipline, essay enabled by default, discursive disabled by default.
+- Free mode with custom question count and no discipline breakdown.
+- Toggle essay and discursive sections any time (each capped at 10 points).
+- Course weights, cutoffs, and PMC from the UFSC 2025 table (cutoffs are shown only in final mode).
+- Equal-weight mode (all weights = 1.0) for quick comparisons.
+- Direct score overrides per question and per discipline.
+- Responsive layout designed for desktop and mobile.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Scoring Model
+The official per-question formula is:
 
-## React Compiler
+P = (NP - (NTPC - (NPC - NPI))) / NP
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Where:
+- P is the score for the question.
+- NP is the number of propositions in the question.
+- NTPC is the number of correct propositions in the official key.
+- NPC is the number of correct propositions marked by the candidate.
+- NPI is the number of incorrect propositions marked by the candidate.
 
-## Expanding the ESLint configuration
+If the result is negative, the question score is set to zero.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Open questions only score if the candidate answer equals the official key.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Tech Stack
+- React 19
+- TypeScript 5
+- Vite 7
+- Vanilla CSS
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Getting Started
+1. Install dependencies.
+   - npm install
+2. Start the dev server.
+   - npm run dev
+3. Build for production.
+   - npm run build
+4. Preview the production build.
+   - npm run preview
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Data Sources
+Course weights, cutoffs, and PMC are based on the UFSC 2025 unified exam table (ANEXO A-3). This project is an unofficial simulator.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Deployment
+This is a static front-end app with no backend. This app is deployed directly to Vercel, an static hosting provider.
