@@ -438,6 +438,7 @@ function App() {
           disciplineTotals={disciplineTotals}
           disciplineState={disciplineState}
           questionValue={questionValue}
+          showCutoffs={examMode === "final"}
           onCourseChange={setSelectedCourseCode}
           onToggleEqualWeights={setUseEqualWeights}
           onToggleDisciplineOpen={toggleDisciplineOpen}

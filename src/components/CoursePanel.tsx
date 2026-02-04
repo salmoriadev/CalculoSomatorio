@@ -17,6 +17,7 @@ type CoursePanelProps = {
   disciplineTotals: Record<DisciplineKey, number>;
   disciplineState: Record<DisciplineKey, DisciplineState>;
   questionValue: number;
+  showCutoffs: boolean;
   onCourseChange: (value: string) => void;
   onToggleEqualWeights: (checked: boolean) => void;
   onToggleDisciplineOpen: (key: DisciplineKey) => void;
@@ -46,6 +47,7 @@ const CoursePanel = ({
   disciplineTotals,
   disciplineState,
   questionValue,
+  showCutoffs,
   onCourseChange,
   onToggleEqualWeights,
   onToggleDisciplineOpen,
@@ -59,10 +61,11 @@ const CoursePanel = ({
   <section className="panel course-panel">
     <div className="course-header">
       <div>
-        <h2>Pesos e pontos de corte</h2>
+        <h2>{showCutoffs ? "Pesos e pontos de corte" : "Pesos do curso"}</h2>
         <p>
-          Escolha o curso para ver pesos, mínimos e a pontuação máxima do
-          vestibular UFSC.
+          {showCutoffs
+            ? "Escolha o curso para ver pesos, mínimos e a pontuação máxima do vestibular UFSC."
+            : "Escolha o curso para ver pesos e a pontuação máxima do vestibular UFSC."}
         </p>
       </div>
       <div className="course-select">
@@ -119,7 +122,7 @@ const CoursePanel = ({
               : selectedCourse.weights[discipline.key];
             const cutoff = selectedCourse.cutoffs[discipline.key];
             const score = disciplineTotals[discipline.key];
-            const belowCutoff = score > 0 && score < cutoff;
+            const belowCutoff = showCutoffs && score > 0 && score < cutoff;
 
             return (
               <div
@@ -127,7 +130,7 @@ const CoursePanel = ({
                 className={`discipline-card ${belowCutoff ? "alert" : ""}`}
               >
                 <button
-                  className="discipline-summary"
+                  className={`discipline-summary ${showCutoffs ? "" : "no-cutoff"}`}
                   type="button"
                   onClick={() => onToggleDisciplineOpen(discipline.key)}
                 >
@@ -139,10 +142,12 @@ const CoursePanel = ({
                     <span>Peso</span>
                     <strong>{weight}</strong>
                   </div>
-                  <div className="discipline-meta">
-                    <span>Min. (corte)</span>
-                    <strong>{cutoff}</strong>
-                  </div>
+                  {showCutoffs ? (
+                    <div className="discipline-meta">
+                      <span>Min. (corte)</span>
+                      <strong>{cutoff}</strong>
+                    </div>
+                  ) : null}
                   <div className="discipline-meta">
                     <span>Sua nota</span>
                     <strong>{formatScore(score)}</strong>
@@ -344,12 +349,14 @@ const CoursePanel = ({
               : selectedCourse.weights[discipline.key];
             const cutoff = selectedCourse.cutoffs[discipline.key];
             const score = disciplineTotals[discipline.key];
-            const belowCutoff = score > 0 && score < cutoff;
+            const belowCutoff = showCutoffs && score > 0 && score < cutoff;
 
             return (
               <div
                 key={discipline.key}
-                className={`discipline-static ${belowCutoff ? "alert" : ""}`}
+                className={`discipline-static ${belowCutoff ? "alert" : ""} ${
+                  showCutoffs ? "" : "no-cutoff"
+                }`}
               >
                 <div>
                   <p className="course-label">{discipline.label}</p>
@@ -364,10 +371,12 @@ const CoursePanel = ({
                   <span>Peso</span>
                   <strong>{weight}</strong>
                 </div>
-                <div className="discipline-meta">
-                  <span>Min. (corte)</span>
-                  <strong>{cutoff}</strong>
-                </div>
+                {showCutoffs ? (
+                  <div className="discipline-meta">
+                    <span>Min. (corte)</span>
+                    <strong>{cutoff}</strong>
+                  </div>
+                ) : null}
                 <div className="discipline-meta">
                   <span>Sua nota</span>
                   <strong>{formatScore(score)}</strong>
