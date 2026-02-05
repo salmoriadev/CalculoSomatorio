@@ -19,6 +19,10 @@ const HeroSection = ({
   onToggleTheme,
 }: HeroSectionProps) => {
   const displayValue = (value: number) => (value === 0 ? "" : value);
+  const logoSrc =
+    theme === "light"
+      ? "/vertical_sigla_fundo_claro.png"
+      : "/brasao_site_ufsc.svg";
 
   return (
     <>
@@ -26,11 +30,7 @@ const HeroSection = ({
         <div className="site-header__inner">
           <div className="site-brand">
             <span className="logo-badge" aria-hidden>
-              <img
-                src="/vertical_sigla_fundo_claro.png"
-                alt="UFSC"
-                loading="lazy"
-              />
+              <img src={logoSrc} alt="UFSC" loading="lazy" />
             </span>
             <div>
               <span className="site-title">

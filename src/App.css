@@ -106,8 +106,8 @@
 }
 
 .logo-badge {
-    width: 64px;
-    height: 64px;
+    width: 70px;
+    height: 70px;
     border-radius: 16px;
     background: var(--logo-bg);
     border: 1px solid var(--logo-border);
@@ -128,15 +128,15 @@
 .site-title {
     display: block;
     text-transform: uppercase;
-    letter-spacing: 0.18em;
-    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    font-size: 0.76rem;
     font-weight: 600;
     color: var(--header-text);
 }
 
 .site-subtitle {
     display: block;
-    font-size: 1.05rem;
+    font-size: 1.15rem;
     font-weight: 700;
     color: var(--header-text);
 }
@@ -219,6 +219,7 @@ select {
     color: var(--text-primary);
     font-size: 1rem;
     font-family: inherit;
+    min-width: 0;
     transition:
         border 0.2s ease,
         box-shadow 0.2s ease;
@@ -418,6 +419,7 @@ button:active {
     margin-bottom: 32px;
     display: grid;
     gap: 20px;
+    overflow: hidden;
 }
 
 .course-header {
@@ -441,6 +443,13 @@ button:active {
     display: grid;
     gap: 8px;
     min-width: 260px;
+    max-width: 100%;
+}
+
+.course-select select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
 }
 
 .course-toggle {
@@ -870,18 +879,24 @@ button:active {
     }
 
     .logo-badge {
-        width: 56px;
-        height: 56px;
+        width: 62px;
+        height: 62px;
         border-radius: 14px;
     }
 
     .site-title {
-        letter-spacing: 0.14em;
-        font-size: 0.62rem;
+        letter-spacing: 0.12em;
+        font-size: 0.66rem;
     }
 
     .site-subtitle {
-        font-size: 0.95rem;
+        font-size: 1rem;
+    }
+
+    .site-subnav {
+        padding: 8px 16px;
+        font-size: 0.72rem;
+        letter-spacing: 0.1em;
     }
 
     .hero-metrics {
