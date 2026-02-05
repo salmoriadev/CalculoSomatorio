@@ -31,6 +31,14 @@ import "./App.css";
 const SCORE_LIMIT = 10;
 
 function App() {
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    if (typeof window === "undefined") return "dark";
+    const stored = window.localStorage.getItem("ufsc-theme");
+    if (stored === "light" || stored === "dark") return stored;
+    return window.matchMedia("(prefers-color-scheme: light)").matches
+      ? "light"
+      : "dark";
+  });
   const [setupOpen, setSetupOpen] = useState(true);
   const [setupMode, setSetupMode] = useState<ExamMode>("final");
   const [examMode, setExamMode] = useState<ExamMode>("final");
@@ -59,6 +67,11 @@ function App() {
   const [useEqualWeights, setUseEqualWeights] = useState(false);
 
   const isFreeMode = examMode === "free";
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    window.localStorage.setItem("ufsc-theme", theme);
+  }, [theme]);
 
   useEffect(() => {
     const { body, documentElement } = document;
@@ -380,11 +393,15 @@ function App() {
       />
 
       <HeroSection
+        theme={theme}
         targetScore={targetScore}
         targetGap={targetGap}
         summary={summary}
         onTargetScoreChange={(value) =>
           setTargetScore(clampFloat(value, targetScore))
+        }
+        onToggleTheme={() =>
+          setTheme((prev) => (prev === "dark" ? "light" : "dark"))
         }
       />
 
