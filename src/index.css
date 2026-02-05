@@ -15,6 +15,8 @@
     --accent-primary: #1b69e5;
     --accent-secondary: #2bb673;
     --accent-soft: rgba(121, 170, 255, 0.9);
+    --status-success: #2bb673;
+    --status-danger: #f87171;
     --focus-border: rgba(121, 170, 255, 0.8);
     --focus-ring: rgba(27, 105, 229, 0.28);
     --panel-bg: rgba(12, 18, 34, 0.78);
@@ -58,7 +60,8 @@
         linear-gradient(135deg, #0b4aa2 0%, #0d61c8 55%, #0f4d8f 100%);
     --header-border: rgba(255, 255, 255, 0.2);
     --header-text: #f8fbff;
-    background-color: #0a0e1a;
+    --page-bg-fallback: #070a14;
+    background-color: var(--page-bg-fallback);
 }
 
 [data-theme="light"] {
@@ -68,6 +71,8 @@
     --accent-primary: #0b63d1;
     --accent-secondary: #1f9d62;
     --accent-soft: #0e5fcb;
+    --status-success: #1f9d62;
+    --status-danger: #dc2626;
     --focus-border: rgba(11, 99, 209, 0.7);
     --focus-ring: rgba(11, 99, 209, 0.2);
     --panel-bg: rgba(255, 255, 255, 0.92);
@@ -107,6 +112,7 @@
         linear-gradient(135deg, #0b4aa2 0%, #0d61c8 55%, #0f4d8f 100%);
     --header-border: rgba(255, 255, 255, 0.28);
     --header-text: #f8fbff;
+    --page-bg-fallback: #ffffff;
 }
 
 * {
@@ -117,6 +123,7 @@
 
 html {
     scroll-behavior: smooth;
+    background-color: var(--page-bg-fallback);
 }
 
 html,
@@ -129,7 +136,10 @@ body {
 
 body {
     min-height: 100vh;
-    background: var(--body-bg);
+    background-color: var(--page-bg-fallback);
+    background-image: var(--body-bg);
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
     position: relative;
     overflow-x: hidden;
     width: 100%;
@@ -155,7 +165,7 @@ body::before {
 }
 
 body::after {
-    bottom: -160px;
+    top: 44vh;
     left: -80px;
     background: radial-gradient(circle, var(--glow-secondary), transparent 60%);
 }
@@ -163,9 +173,14 @@ body::after {
 #root {
     position: relative;
     z-index: 1;
+    min-height: 100vh;
     width: 100%;
     max-width: 100%;
     overflow-x: hidden;
+}
+
+[data-theme="light"] body::after {
+    display: none;
 }
 
 @supports (overflow: clip) {

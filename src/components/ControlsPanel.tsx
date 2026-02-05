@@ -134,8 +134,8 @@ const ControlsPanel = ({
         Incluir redação nesta simulação
       </label>
       <p className="helper">
-        Defina sua meta e acompanhe o total geral. Dica: marcar uma incorreta
-        reduz a sua pontuação.
+        Escolha a referência de meta no topo e acompanhe o total geral. Dica:
+        marcar uma incorreta reduz a sua pontuação.
       </p>
     </section>
   );

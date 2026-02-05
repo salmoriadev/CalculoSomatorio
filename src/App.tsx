@@ -13,6 +13,7 @@ import ControlsPanel from "./components/ControlsPanel";
 import CoursePanel from "./components/CoursePanel";
 import FreeQuestions from "./components/FreeQuestions";
 import FooterSection from "./components/FooterSection";
+import { getCourseScoreStats, type TargetMode } from "./data/scoreHistory";
 import type {
   DisciplineState,
   ExamMode,
@@ -45,7 +46,8 @@ function App() {
   const [freeQuestionCount, setFreeQuestionCount] = useState(10);
   const [questionCount, setQuestionCount] = useState(10);
   const [objectiveTotal, setObjectiveTotal] = useState(80);
-  const [targetScore, setTargetScore] = useState(0);
+  const [targetMode, setTargetMode] = useState<TargetMode>("max");
+  const [customTargetScore, setCustomTargetScore] = useState(0);
   const [discursivePoints, setDiscursivePoints] = useState(10);
   const [essayPoints, setEssayPoints] = useState(10);
   const [essayEnabled, setEssayEnabled] = useState(true);
@@ -169,11 +171,19 @@ function App() {
     }, 0);
   }, [selectedCourse, disciplineTotals, useEqualWeights]);
 
-  const targetGap = useMemo(() => {
-    if (targetScore <= 0) return null;
-    const diff = targetScore - summary.total;
-    return diff > 0 ? diff : 0;
-  }, [targetScore, summary.total]);
+  const targetStats = useMemo(
+    () => getCourseScoreStats(selectedCourseCode),
+    [selectedCourseCode],
+  );
+
+  const targetScore = useMemo(() => {
+    if (targetMode === "custom") {
+      return customTargetScore > 0 ? customTargetScore : null;
+    }
+    if (targetMode === "latest") return targetStats.latest;
+    if (targetMode === "average") return targetStats.average;
+    return targetStats.max;
+  }, [targetMode, targetStats, customTargetScore]);
 
   const updateDiscipline = (
     key: DisciplineKey,
@@ -394,12 +404,14 @@ function App() {
 
       <HeroSection
         theme={theme}
+        targetMode={targetMode}
         targetScore={targetScore}
-        targetGap={targetGap}
         summary={summary}
-        onTargetScoreChange={(value) =>
-          setTargetScore(clampFloat(value, targetScore))
+        customTargetScore={customTargetScore}
+        onCustomTargetChange={(value) =>
+          setCustomTargetScore(clampFloat(value, customTargetScore))
         }
+        onTargetModeChange={setTargetMode}
         onToggleTheme={() =>
           setTheme((prev) => (prev === "dark" ? "light" : "dark"))
         }
