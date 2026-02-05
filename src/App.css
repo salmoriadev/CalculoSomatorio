@@ -1,6 +1,6 @@
 .app {
     min-height: 100vh;
-    padding: 48px 6vw 72px;
+    padding: 30px 6vw 72px;
     color: var(--text-primary);
     max-width: 1200px;
     width: min(100%, 1200px);
@@ -47,6 +47,7 @@
     gap: 32px;
     align-items: flex-start;
     margin-bottom: 32px;
+    padding-top: 20px;
 }
 
 .hero > * {
