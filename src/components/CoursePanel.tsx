@@ -157,7 +157,6 @@ const CoursePanel = ({
                     </div>
                     <span
                       className={`discipline-caret ${state.open ? "open" : ""}`}
-                      aria-hidden
                     />
                   </button>
 

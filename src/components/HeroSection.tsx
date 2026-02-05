@@ -105,7 +105,7 @@ const HeroSection = ({
       <div className="site-header">
         <div className="site-header__inner">
           <div className="site-brand">
-            <span className="logo-badge" aria-hidden>
+            <span className="logo-badge">
               <img src={logoSrc} alt="UFSC" loading="lazy" />
             </span>
             <div>
@@ -123,7 +123,7 @@ const HeroSection = ({
             onClick={onToggleTheme}
             aria-pressed={theme === "dark"}
           >
-            <span className="theme-indicator" aria-hidden />
+            <span className="theme-indicator" />
             {theme === "dark" ? "Tema claro" : "Tema escuro"}
           </button>
         </div>
@@ -157,7 +157,6 @@ const HeroSection = ({
                 <span>{selectedOption.shortLabel}</span>
                 <span
                   className={`target-select__caret ${isTargetMenuOpen ? "open" : ""}`}
-                  aria-hidden
                 />
               </button>
 

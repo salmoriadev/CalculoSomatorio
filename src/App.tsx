@@ -390,7 +390,7 @@ function App() {
   };
 
   return (
-    <div className="app">
+    <main className="app">
       <SetupOverlay
         open={setupOpen}
         setupMode={setupMode}
@@ -500,7 +500,7 @@ function App() {
       ) : null}
 
       <FooterSection summary={summary} />
-    </div>
+    </main>
   );
 }
 
