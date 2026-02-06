@@ -44,8 +44,17 @@ const extrairAnoDaLinha = (linha: string): number | null => {
   return null;
 };
 
-const montarHistoricoPorCurso = () => {
-  const historicoPorCurso = new Map<string, Map<number, number>>();
+const ESTATISTICAS_NOTAS_VAZIAS: EstatisticasNotasCurso = Object.freeze({
+  anos: [],
+  anoMaisRecente: null,
+  notaMaisRecente: null,
+  mediaNotas: null,
+  maiorNota: null,
+  quantidadeNotas: 0,
+});
+
+const montarEstatisticasNotasPorCurso = () => {
+  const notasPorCursoEAno = new Map<string, Map<number, number>>();
   let anoAtual: number | null = null;
 
   notasBrutas.split(/\r?\n/).forEach((linha) => {
@@ -66,58 +75,54 @@ const montarHistoricoPorCurso = () => {
     const notaUltimoClassificado = parsearNota(correspondencia[3]);
     if (notaUltimoClassificado == null) return;
 
-    const notasPorAno = historicoPorCurso.get(codigoCurso) ?? new Map<number, number>();
+    const notasPorAno =
+      notasPorCursoEAno.get(codigoCurso) ?? new Map<number, number>();
     notasPorAno.set(anoAtual, notaUltimoClassificado);
-    historicoPorCurso.set(codigoCurso, notasPorAno);
+    notasPorCursoEAno.set(codigoCurso, notasPorAno);
   });
 
-  return historicoPorCurso;
+  const estatisticasPorCurso = new Map<string, EstatisticasNotasCurso>();
+
+  notasPorCursoEAno.forEach((notasPorAno, codigoCurso) => {
+    const notasOrdenadasPorAno: NotaCursoAno[] = Array.from(
+      notasPorAno.entries(),
+    ).map(([ano, nota]) => ({ ano, nota }));
+    notasOrdenadasPorAno.sort((a, b) => b.ano - a.ano);
+
+    const anos = notasOrdenadasPorAno.map((item) => item.ano);
+    const notas = notasOrdenadasPorAno.map((item) => item.nota);
+
+    if (!notas.length) {
+      estatisticasPorCurso.set(codigoCurso, ESTATISTICAS_NOTAS_VAZIAS);
+      return;
+    }
+
+    const somaNotas = notas.reduce((acumulador, nota) => acumulador + nota, 0);
+    const mediaNotas = somaNotas / notas.length;
+    const maiorNota = Math.max(...notas);
+
+    estatisticasPorCurso.set(
+      codigoCurso,
+      Object.freeze({
+        anos,
+        anoMaisRecente: anos[0] ?? null,
+        notaMaisRecente: notas[0] ?? null,
+        mediaNotas,
+        maiorNota,
+        quantidadeNotas: notas.length,
+      }),
+    );
+  });
+
+  return estatisticasPorCurso;
 };
 
-const HISTORICO_NOTAS_POR_CURSO = montarHistoricoPorCurso();
+const ESTATISTICAS_NOTAS_POR_CURSO = montarEstatisticasNotasPorCurso();
 
-export const obterEstatisticasNotasCurso = (codigoCurso: string): EstatisticasNotasCurso => {
-  const notasPorAno = HISTORICO_NOTAS_POR_CURSO.get(codigoCurso);
-  if (!notasPorAno) {
-    return {
-      anos: [],
-      anoMaisRecente: null,
-      notaMaisRecente: null,
-      mediaNotas: null,
-      maiorNota: null,
-      quantidadeNotas: 0,
-    };
-  }
-
-  const notasOrdenadasPorAno: NotaCursoAno[] = Array.from(notasPorAno.entries()).map(
-    ([ano, nota]) => ({ ano, nota }),
+export const obterEstatisticasNotasCurso = (
+  codigoCurso: string,
+): EstatisticasNotasCurso => {
+  return (
+    ESTATISTICAS_NOTAS_POR_CURSO.get(codigoCurso) ?? ESTATISTICAS_NOTAS_VAZIAS
   );
-  notasOrdenadasPorAno.sort((a, b) => b.ano - a.ano);
-
-  const anos = notasOrdenadasPorAno.map((item) => item.ano);
-  const notas = notasOrdenadasPorAno.map((item) => item.nota);
-
-  if (!notas.length) {
-    return {
-      anos: [],
-      anoMaisRecente: null,
-      notaMaisRecente: null,
-      mediaNotas: null,
-      maiorNota: null,
-      quantidadeNotas: 0,
-    };
-  }
-
-  const somaNotas = notas.reduce((acumulador, nota) => acumulador + nota, 0);
-  const mediaNotas = somaNotas / notas.length;
-  const maiorNota = Math.max(...notas);
-
-  return {
-    anos,
-    anoMaisRecente: anos[0] ?? null,
-    notaMaisRecente: notas[0] ?? null,
-    mediaNotas,
-    maiorNota,
-    quantidadeNotas: notas.length,
-  };
 };

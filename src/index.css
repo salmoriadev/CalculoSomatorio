@@ -1,7 +1,7 @@
 /*
  * Estilos globais, variáveis de tema e reset base da aplicação.
+ * As fontes são carregadas via <link> em index.html para reduzir latência.
  */
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
 :root {
     font-family: "IBM Plex Sans", system-ui, sans-serif;
