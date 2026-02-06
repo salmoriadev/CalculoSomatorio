@@ -1,83 +1,104 @@
+/**
+ * Componente raiz da calculadora.
+ * Centraliza o estado global da simulação, conecta os painéis de UI
+ * e aplica as regras de cálculo de pontuação/meta.
+ */
 import { useEffect, useMemo, useState } from "react";
-import courses from "./data/courses";
-import type { DisciplineKey } from "./data/courses";
+import PainelControles from "./components/PainelControles";
+import PainelCurso from "./components/PainelCurso";
+import PainelQuestoesLivres from "./components/PainelQuestoesLivres";
+import SecaoPrincipal from "./components/SecaoPrincipal";
+import SecaoRodape from "./components/SecaoRodape";
+import SobreposicaoConfiguracao from "./components/SobreposicaoConfiguracao";
+import cursos, { type ChaveDisciplina } from "./data/cursos";
 import {
-  DEFAULT_COUNTS_FINAL,
-  DEFAULT_COUNTS_MID,
-  DISCIPLINES,
-  OBJECTIVE_DISCIPLINES,
-} from "./data/disciplines";
-import SetupOverlay from "./components/SetupOverlay";
-import HeroSection from "./components/HeroSection";
-import ControlsPanel from "./components/ControlsPanel";
-import CoursePanel from "./components/CoursePanel";
-import FreeQuestions from "./components/FreeQuestions";
-import FooterSection from "./components/FooterSection";
-import { getCourseScoreStats, type TargetMode } from "./data/scoreHistory";
+  CONTAGENS_PADRAO_FINAL,
+  CONTAGENS_PADRAO_MEIO,
+  DISCIPLINAS,
+  DISCIPLINAS_OBJETIVAS,
+} from "./data/disciplinas";
+import {
+  obterEstatisticasNotasCurso,
+  type ModoMeta,
+} from "./data/historicoNotas";
 import type {
-  DisciplineState,
-  ExamMode,
-  Question,
-  Summary,
-} from "./types/exam";
+  EstadoDisciplina,
+  ModoProva,
+  Questao,
+  Resumo,
+} from "./types/prova";
 import {
-  buildDisciplineState,
-  buildQuestions,
-  createQuestion,
-} from "./utils/builders";
-import { clampFloat, clampInt, parseMaxProp } from "./utils/format";
-import { computeQuestionScore } from "./utils/scoring";
+  construirEstadoDisciplinas,
+  construirQuestoes,
+  criarQuestao,
+} from "./utils/construtores";
+import {
+  limitarDecimalNaoNegativo,
+  limitarInteiroNaoNegativo,
+  parsearMaximoProposicao,
+} from "./utils/formatacao";
+import { calcularPontuacaoQuestao } from "./utils/pontuacao";
 import "./App.css";
 
-const SCORE_LIMIT = 10;
+const LIMITE_PONTUACAO_ESPECIAL = 10;
 
 function App() {
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
+  const [tema, setTema] = useState<"dark" | "light">(() => {
     if (typeof window === "undefined") return "dark";
-    const stored = window.localStorage.getItem("ufsc-theme");
-    if (stored === "light" || stored === "dark") return stored;
+    const temaSalvo = window.localStorage.getItem("ufsc-theme");
+    if (temaSalvo === "light" || temaSalvo === "dark") return temaSalvo;
     return window.matchMedia("(prefers-color-scheme: light)").matches
       ? "light"
       : "dark";
   });
-  const [setupOpen, setSetupOpen] = useState(true);
-  const [setupMode, setSetupMode] = useState<ExamMode>("final");
-  const [examMode, setExamMode] = useState<ExamMode>("final");
-  const [freeQuestionCount, setFreeQuestionCount] = useState(10);
-  const [questionCount, setQuestionCount] = useState(10);
-  const [objectiveTotal, setObjectiveTotal] = useState(80);
-  const [targetMode, setTargetMode] = useState<TargetMode>("max");
-  const [customTargetScore, setCustomTargetScore] = useState(0);
-  const [discursivePoints, setDiscursivePoints] = useState(10);
-  const [essayPoints, setEssayPoints] = useState(10);
-  const [essayEnabled, setEssayEnabled] = useState(true);
-  const [discursiveEnabled, setDiscursiveEnabled] = useState(true);
-  const [questions, setQuestions] = useState<Question[]>(() =>
-    buildQuestions(10),
-  );
-  const [disciplineState, setDisciplineState] = useState<
-    Record<DisciplineKey, DisciplineState>
-  >(() => buildDisciplineState(DEFAULT_COUNTS_FINAL));
 
-  const [selectedCourseCode, setSelectedCourseCode] = useState(
-    courses[0]?.code ?? "",
-  );
-  const selectedCourse = useMemo(
-    () => courses.find((course) => course.code === selectedCourseCode) ?? null,
-    [selectedCourseCode],
-  );
-  const [useEqualWeights, setUseEqualWeights] = useState(false);
+  const [sobreposicaoAberta, setSobreposicaoAberta] = useState(true);
+  const [modoConfiguracao, setModoConfiguracao] = useState<ModoProva>("final");
+  const [modoProva, setModoProva] = useState<ModoProva>("final");
 
-  const isFreeMode = examMode === "free";
+  const [quantidadeQuestoesLivre, setQuantidadeQuestoesLivre] = useState(10);
+  const [quantidadeQuestoesModoLivre, setQuantidadeQuestoesModoLivre] =
+    useState(10);
+  const [totalProvaObjetiva, setTotalProvaObjetiva] = useState(80);
+
+  const [modoMeta, setModoMeta] = useState<ModoMeta>("maior");
+  const [metaPersonalizada, setMetaPersonalizada] = useState(0);
+
+  const [pontosDiscursivas, setPontosDiscursivas] = useState(10);
+  const [pontosRedacao, setPontosRedacao] = useState(10);
+  const [discursivasAtivas, setDiscursivasAtivas] = useState(true);
+  const [redacaoAtiva, setRedacaoAtiva] = useState(true);
+
+  const [questoesModoLivre, setQuestoesModoLivre] = useState<Questao[]>(() =>
+    construirQuestoes(10),
+  );
+
+  const [estadoDisciplinas, setEstadoDisciplinas] = useState<
+    Record<ChaveDisciplina, EstadoDisciplina>
+  >(() => construirEstadoDisciplinas(CONTAGENS_PADRAO_FINAL));
+
+  const [codigoCursoSelecionado, setCodigoCursoSelecionado] = useState(
+    cursos[0]?.codigo ?? "",
+  );
+
+  const cursoSelecionado = useMemo(
+    () =>
+      cursos.find((curso) => curso.codigo === codigoCursoSelecionado) ?? null,
+    [codigoCursoSelecionado],
+  );
+
+  const [usarPesosIguais, setUsarPesosIguais] = useState(false);
+
+  const modoLivreAtivo = modoProva === "livre";
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    window.localStorage.setItem("ufsc-theme", theme);
-  }, [theme]);
+    document.documentElement.dataset.theme = tema;
+    window.localStorage.setItem("ufsc-theme", tema);
+  }, [tema]);
 
   useEffect(() => {
     const { body, documentElement } = document;
-    if (setupOpen) {
+    if (sobreposicaoAberta) {
       body.style.overflow = "hidden";
       documentElement.style.overflow = "hidden";
     } else {
@@ -89,417 +110,507 @@ function App() {
       body.style.overflow = "";
       documentElement.style.overflow = "";
     };
-  }, [setupOpen]);
+  }, [sobreposicaoAberta]);
 
-  const totalDisciplineQuestions = useMemo(() => {
-    return OBJECTIVE_DISCIPLINES.reduce((acc, discipline) => {
-      return acc + disciplineState[discipline.key].questions.length;
+  const totalQuestoesDisciplinas = useMemo(() => {
+    return DISCIPLINAS_OBJETIVAS.reduce((acumulador, disciplina) => {
+      return acumulador + estadoDisciplinas[disciplina.chave].questoes.length;
     }, 0);
-  }, [disciplineState]);
+  }, [estadoDisciplinas]);
 
-  const totalObjectiveQuestions = isFreeMode
-    ? questions.length
-    : totalDisciplineQuestions;
+  const totalQuestoesObjetivas = modoLivreAtivo
+    ? questoesModoLivre.length
+    : totalQuestoesDisciplinas;
 
-  const questionValue = useMemo(() => {
-    if (!totalObjectiveQuestions) return 0;
-    return objectiveTotal / totalObjectiveQuestions;
-  }, [objectiveTotal, totalObjectiveQuestions]);
+  const valorQuestao = useMemo(() => {
+    if (!totalQuestoesObjetivas) return 0;
+    return totalProvaObjetiva / totalQuestoesObjetivas;
+  }, [totalProvaObjetiva, totalQuestoesObjetivas]);
 
-  const disciplineTotals = useMemo(() => {
-    const totals = {} as Record<DisciplineKey, number>;
+  const totaisDisciplinas = useMemo(() => {
+    const totais = {} as Record<ChaveDisciplina, number>;
 
-    OBJECTIVE_DISCIPLINES.forEach((discipline) => {
-      const state = disciplineState[discipline.key];
-      const total = state.directScoreEnabled
-        ? Math.max(0, state.directScore)
-        : state.questions.reduce((acc, question) => {
-            return acc + computeQuestionScore(question, questionValue).score;
+    DISCIPLINAS_OBJETIVAS.forEach((disciplina) => {
+      const estadoDisciplina = estadoDisciplinas[disciplina.chave];
+      const totalDisciplina = estadoDisciplina.notaDiretaAtiva
+        ? Math.max(0, estadoDisciplina.notaDireta)
+        : estadoDisciplina.questoes.reduce((acumulador, questao) => {
+            return (
+              acumulador +
+              calcularPontuacaoQuestao(questao, valorQuestao).pontuacao
+            );
           }, 0);
-      totals[discipline.key] = total;
+
+      totais[disciplina.chave] = totalDisciplina;
     });
 
-    totals.RDC = essayEnabled ? essayPoints : 0;
-    totals.DSC = discursiveEnabled ? discursivePoints : 0;
+    totais.RDC = redacaoAtiva ? pontosRedacao : 0;
+    totais.DSC = discursivasAtivas ? pontosDiscursivas : 0;
 
-    return totals;
+    return totais;
   }, [
-    disciplineState,
-    questionValue,
-    essayEnabled,
-    essayPoints,
-    discursiveEnabled,
-    discursivePoints,
+    estadoDisciplinas,
+    valorQuestao,
+    redacaoAtiva,
+    pontosRedacao,
+    discursivasAtivas,
+    pontosDiscursivas,
   ]);
 
-  const summary: Summary = useMemo(() => {
-    const discursiveScore = discursiveEnabled ? discursivePoints : 0;
-    const essayScore = essayEnabled ? essayPoints : 0;
+  const resumo: Resumo = useMemo(() => {
+    const pontosDiscursivosAtivos = discursivasAtivas ? pontosDiscursivas : 0;
+    const pontosRedacaoAtivos = redacaoAtiva ? pontosRedacao : 0;
 
-    if (isFreeMode) {
-      const scores = questions.map((question) =>
-        computeQuestionScore(question, questionValue),
+    if (modoLivreAtivo) {
+      const pontuacoesQuestoes = questoesModoLivre.map((questao) =>
+        calcularPontuacaoQuestao(questao, valorQuestao),
       );
-      const objectiveScore = scores.reduce((acc, item) => acc + item.score, 0);
-      const total = objectiveScore + discursiveScore + essayScore;
-      return { scores, objectiveScore, total };
+      const pontuacaoObjetiva = pontuacoesQuestoes.reduce(
+        (acumulador, item) => acumulador + item.pontuacao,
+        0,
+      );
+      const total =
+        pontuacaoObjetiva + pontosDiscursivosAtivos + pontosRedacaoAtivos;
+
+      return {
+        pontuacoes: pontuacoesQuestoes,
+        pontuacaoObjetiva,
+        total,
+      };
     }
 
-    const objectiveScore = OBJECTIVE_DISCIPLINES.reduce((acc, discipline) => {
-      return acc + disciplineTotals[discipline.key];
-    }, 0);
-    const total = objectiveScore + discursiveScore + essayScore;
-    return { scores: [], objectiveScore, total };
+    const pontuacaoObjetiva = DISCIPLINAS_OBJETIVAS.reduce(
+      (acumulador, disciplina) => {
+        return acumulador + totaisDisciplinas[disciplina.chave];
+      },
+      0,
+    );
+
+    const total =
+      pontuacaoObjetiva + pontosDiscursivosAtivos + pontosRedacaoAtivos;
+
+    return {
+      pontuacoes: [],
+      pontuacaoObjetiva,
+      total,
+    };
   }, [
-    isFreeMode,
-    questions,
-    questionValue,
-    disciplineTotals,
-    discursiveEnabled,
-    discursivePoints,
-    essayEnabled,
-    essayPoints,
+    discursivasAtivas,
+    pontosDiscursivas,
+    redacaoAtiva,
+    pontosRedacao,
+    modoLivreAtivo,
+    questoesModoLivre,
+    valorQuestao,
+    totaisDisciplinas,
   ]);
 
-  const weightedTotal = useMemo(() => {
-    if (!selectedCourse) return 0;
-    return DISCIPLINES.reduce((acc, discipline) => {
-      const weight = useEqualWeights
-        ? 1
-        : selectedCourse.weights[discipline.key];
-      return acc + disciplineTotals[discipline.key] * weight;
-    }, 0);
-  }, [selectedCourse, disciplineTotals, useEqualWeights]);
+  const somatorioPonderado = useMemo(() => {
+    if (!cursoSelecionado) return 0;
 
-  const targetStats = useMemo(
-    () => getCourseScoreStats(selectedCourseCode),
-    [selectedCourseCode],
+    return DISCIPLINAS.reduce((acumulador, disciplina) => {
+      const pesoDisciplina = usarPesosIguais
+        ? 1
+        : cursoSelecionado.pesos[disciplina.chave];
+      return acumulador + totaisDisciplinas[disciplina.chave] * pesoDisciplina;
+    }, 0);
+  }, [cursoSelecionado, totaisDisciplinas, usarPesosIguais]);
+
+  const estatisticasNotasCurso = useMemo(
+    () => obterEstatisticasNotasCurso(codigoCursoSelecionado),
+    [codigoCursoSelecionado],
   );
 
-  const targetScore = useMemo(() => {
-    if (targetMode === "custom") {
-      return customTargetScore > 0 ? customTargetScore : null;
+  const pontuacaoMeta = useMemo(() => {
+    if (modoMeta === "personalizada") {
+      return metaPersonalizada > 0 ? metaPersonalizada : null;
     }
-    if (targetMode === "latest") return targetStats.latest;
-    if (targetMode === "average") return targetStats.average;
-    return targetStats.max;
-  }, [targetMode, targetStats, customTargetScore]);
+    if (modoMeta === "ultima") return estatisticasNotasCurso.notaMaisRecente;
+    if (modoMeta === "media") return estatisticasNotasCurso.mediaNotas;
+    return estatisticasNotasCurso.maiorNota;
+  }, [modoMeta, estatisticasNotasCurso, metaPersonalizada]);
 
-  const updateDiscipline = (
-    key: DisciplineKey,
-    updater: (state: DisciplineState) => DisciplineState,
+  const atualizarEstadoDisciplina = (
+    chaveDisciplina: ChaveDisciplina,
+    atualizador: (estadoAtual: EstadoDisciplina) => EstadoDisciplina,
   ) => {
-    setDisciplineState((prev) => ({
-      ...prev,
-      [key]: updater(prev[key]),
+    setEstadoDisciplinas((estadoAnterior) => ({
+      ...estadoAnterior,
+      [chaveDisciplina]: atualizador(estadoAnterior[chaveDisciplina]),
     }));
   };
 
-  const regenerateQuestions = (count = questionCount) => {
-    const safeCount = Math.max(1, count);
-    setQuestions(buildQuestions(safeCount));
+  const regenerarQuestoesModoLivre = (
+    quantidade = quantidadeQuestoesModoLivre,
+  ) => {
+    const quantidadeSegura = Math.max(1, quantidade);
+    setQuestoesModoLivre(construirQuestoes(quantidadeSegura));
   };
 
-  const resetFreeAnswers = () => {
-    setQuestions((prev) =>
-      prev.map((question) => ({
-        ...question,
+  const zerarRespostasModoLivre = () => {
+    setQuestoesModoLivre((questoesAnteriores) =>
+      questoesAnteriores.map((questao) => ({
+        ...questao,
         candidato: 0,
-        directScoreEnabled: false,
-        directScore: 0,
+        notaDiretaAtiva: false,
+        notaDireta: 0,
       })),
     );
   };
 
-  const handleQuestionChange = (
-    index: number,
-    field: keyof Question,
-    value: string,
+  const alterarQuestaoModoLivre = (
+    indiceQuestao: number,
+    campo: keyof Questao,
+    valor: string,
   ) => {
-    setQuestions((prev) => {
-      const next = [...prev];
-      const current = next[index];
-      if (!current) return prev;
-      if (field === "maxProp") {
-        next[index] = {
-          ...current,
-          maxProp: parseMaxProp(value, current.maxProp),
+    setQuestoesModoLivre((questoesAnteriores) => {
+      const proximasQuestoes = [...questoesAnteriores];
+      const questaoAtual = proximasQuestoes[indiceQuestao];
+      if (!questaoAtual) return questoesAnteriores;
+
+      if (campo === "maximoProposicao") {
+        proximasQuestoes[indiceQuestao] = {
+          ...questaoAtual,
+          maximoProposicao: parsearMaximoProposicao(
+            valor,
+            questaoAtual.maximoProposicao,
+          ),
         };
-      } else if (field === "directScore") {
-        next[index] = {
-          ...current,
-          directScore: clampFloat(value, current.directScore),
+      } else if (campo === "notaDireta") {
+        proximasQuestoes[indiceQuestao] = {
+          ...questaoAtual,
+          notaDireta: limitarDecimalNaoNegativo(valor, questaoAtual.notaDireta),
         };
       } else {
-        next[index] = {
-          ...current,
-          [field]: clampInt(value, current[field] as number),
+        proximasQuestoes[indiceQuestao] = {
+          ...questaoAtual,
+          [campo]: limitarInteiroNaoNegativo(
+            valor,
+            questaoAtual[campo] as number,
+          ),
         };
       }
-      return next;
+
+      return proximasQuestoes;
     });
   };
 
-  const toggleFreeQuestionDirectScore = (index: number, checked: boolean) => {
-    setQuestions((prev) => {
-      const next = [...prev];
-      const current = next[index];
-      if (!current) return prev;
-      next[index] = {
-        ...current,
-        directScoreEnabled: checked,
-      };
-      return next;
-    });
-  };
-
-  const toggleDisciplineOpen = (key: DisciplineKey) => {
-    updateDiscipline(key, (state) => ({ ...state, open: !state.open }));
-  };
-
-  const updateDisciplineQuestionCount = (key: DisciplineKey, value: string) => {
-    updateDiscipline(key, (state) => {
-      const nextCount = clampInt(value, state.questionCount);
-      const nextQuestions = Array.from({ length: nextCount }, (_, index) => {
-        return state.questions[index] ?? createQuestion();
-      });
-      return {
-        ...state,
-        questionCount: nextCount,
-        questions: nextQuestions,
-      };
-    });
-  };
-
-  const handleDisciplineQuestionChange = (
-    key: DisciplineKey,
-    index: number,
-    field: keyof Question,
-    value: string,
+  const alternarNotaDiretaQuestaoModoLivre = (
+    indiceQuestao: number,
+    ativo: boolean,
   ) => {
-    updateDiscipline(key, (state) => {
-      const nextQuestions = [...state.questions];
-      const currentQuestion = nextQuestions[index];
-      if (!currentQuestion) return state;
-      if (field === "maxProp") {
-        nextQuestions[index] = {
-          ...currentQuestion,
-          maxProp: parseMaxProp(value, currentQuestion.maxProp),
+    setQuestoesModoLivre((questoesAnteriores) => {
+      const proximasQuestoes = [...questoesAnteriores];
+      const questaoAtual = proximasQuestoes[indiceQuestao];
+      if (!questaoAtual) return questoesAnteriores;
+
+      proximasQuestoes[indiceQuestao] = {
+        ...questaoAtual,
+        notaDiretaAtiva: ativo,
+      };
+
+      return proximasQuestoes;
+    });
+  };
+
+  const alternarAberturaDisciplina = (chaveDisciplina: ChaveDisciplina) => {
+    atualizarEstadoDisciplina(chaveDisciplina, (estadoAtual) => ({
+      ...estadoAtual,
+      aberta: !estadoAtual.aberta,
+    }));
+  };
+
+  const alterarQuantidadeQuestoesDisciplina = (
+    chaveDisciplina: ChaveDisciplina,
+    valor: string,
+  ) => {
+    atualizarEstadoDisciplina(chaveDisciplina, (estadoAtual) => {
+      const proximaQuantidade = limitarInteiroNaoNegativo(
+        valor,
+        estadoAtual.quantidadeQuestoes,
+      );
+
+      const proximasQuestoes = Array.from(
+        { length: proximaQuantidade },
+        (_, indiceQuestao) =>
+          estadoAtual.questoes[indiceQuestao] ?? criarQuestao(),
+      );
+
+      return {
+        ...estadoAtual,
+        quantidadeQuestoes: proximaQuantidade,
+        questoes: proximasQuestoes,
+      };
+    });
+  };
+
+  const alterarQuestaoDisciplina = (
+    chaveDisciplina: ChaveDisciplina,
+    indiceQuestao: number,
+    campo: keyof Questao,
+    valor: string,
+  ) => {
+    atualizarEstadoDisciplina(chaveDisciplina, (estadoAtual) => {
+      const proximasQuestoes = [...estadoAtual.questoes];
+      const questaoAtual = proximasQuestoes[indiceQuestao];
+      if (!questaoAtual) return estadoAtual;
+
+      if (campo === "maximoProposicao") {
+        proximasQuestoes[indiceQuestao] = {
+          ...questaoAtual,
+          maximoProposicao: parsearMaximoProposicao(
+            valor,
+            questaoAtual.maximoProposicao,
+          ),
         };
-      } else if (field === "directScore") {
-        nextQuestions[index] = {
-          ...currentQuestion,
-          directScore: clampFloat(value, currentQuestion.directScore),
+      } else if (campo === "notaDireta") {
+        proximasQuestoes[indiceQuestao] = {
+          ...questaoAtual,
+          notaDireta: limitarDecimalNaoNegativo(valor, questaoAtual.notaDireta),
         };
       } else {
-        nextQuestions[index] = {
-          ...currentQuestion,
-          [field]: clampInt(value, currentQuestion[field] as number),
+        proximasQuestoes[indiceQuestao] = {
+          ...questaoAtual,
+          [campo]: limitarInteiroNaoNegativo(
+            valor,
+            questaoAtual[campo] as number,
+          ),
         };
       }
+
       return {
-        ...state,
-        questions: nextQuestions,
+        ...estadoAtual,
+        questoes: proximasQuestoes,
       };
     });
   };
 
-  const toggleQuestionDirectScore = (
-    key: DisciplineKey,
-    index: number,
-    checked: boolean,
+  const alternarNotaDiretaQuestaoDisciplina = (
+    chaveDisciplina: ChaveDisciplina,
+    indiceQuestao: number,
+    ativo: boolean,
   ) => {
-    updateDiscipline(key, (state) => {
-      const nextQuestions = [...state.questions];
-      const currentQuestion = nextQuestions[index];
-      if (!currentQuestion) return state;
-      nextQuestions[index] = {
-        ...currentQuestion,
-        directScoreEnabled: checked,
+    atualizarEstadoDisciplina(chaveDisciplina, (estadoAtual) => {
+      const proximasQuestoes = [...estadoAtual.questoes];
+      const questaoAtual = proximasQuestoes[indiceQuestao];
+      if (!questaoAtual) return estadoAtual;
+
+      proximasQuestoes[indiceQuestao] = {
+        ...questaoAtual,
+        notaDiretaAtiva: ativo,
       };
+
       return {
-        ...state,
-        questions: nextQuestions,
+        ...estadoAtual,
+        questoes: proximasQuestoes,
       };
     });
   };
 
-  const resetDisciplineAnswers = (key?: DisciplineKey) => {
-    setDisciplineState((prev) => {
-      const next = { ...prev };
-      const keys = key ? [key] : OBJECTIVE_DISCIPLINES.map((item) => item.key);
-      keys.forEach((disciplineKey) => {
-        const current = next[disciplineKey];
-        next[disciplineKey] = {
-          ...current,
-          directScoreEnabled: false,
-          directScore: 0,
-          questions: current.questions.map((question) => ({
-            ...question,
+  const zerarRespostasDisciplinas = (chaveDisciplina?: ChaveDisciplina) => {
+    setEstadoDisciplinas((estadoAnterior) => {
+      const proximoEstado = { ...estadoAnterior };
+
+      const chaves = chaveDisciplina
+        ? [chaveDisciplina]
+        : DISCIPLINAS_OBJETIVAS.map((disciplina) => disciplina.chave);
+
+      chaves.forEach((chaveAtual) => {
+        const disciplinaAtual = proximoEstado[chaveAtual];
+        proximoEstado[chaveAtual] = {
+          ...disciplinaAtual,
+          notaDiretaAtiva: false,
+          notaDireta: 0,
+          questoes: disciplinaAtual.questoes.map((questao) => ({
+            ...questao,
             candidato: 0,
-            directScoreEnabled: false,
-            directScore: 0,
+            notaDiretaAtiva: false,
+            notaDireta: 0,
           })),
         };
       });
-      return next;
+
+      return proximoEstado;
     });
   };
 
-  const handleResetAnswers = () => {
-    if (isFreeMode) {
-      resetFreeAnswers();
+  const zerarRespostas = () => {
+    if (modoLivreAtivo) {
+      zerarRespostasModoLivre();
       return;
     }
-    resetDisciplineAnswers();
+    zerarRespostasDisciplinas();
   };
 
-  const applySetup = () => {
-    setExamMode(setupMode);
+  const aplicarConfiguracaoInicial = () => {
+    setModoProva(modoConfiguracao);
 
-    if (setupMode === "final") {
-      setDiscursiveEnabled(true);
-      setEssayEnabled(true);
-      setDiscursivePoints(SCORE_LIMIT);
-      setEssayPoints(SCORE_LIMIT);
-      setObjectiveTotal(80);
-      setDisciplineState(buildDisciplineState(DEFAULT_COUNTS_FINAL));
+    if (modoConfiguracao === "final") {
+      setDiscursivasAtivas(true);
+      setRedacaoAtiva(true);
+      setPontosDiscursivas(LIMITE_PONTUACAO_ESPECIAL);
+      setPontosRedacao(LIMITE_PONTUACAO_ESPECIAL);
+      setTotalProvaObjetiva(80);
+      setEstadoDisciplinas(construirEstadoDisciplinas(CONTAGENS_PADRAO_FINAL));
     }
 
-    if (setupMode === "mid") {
-      setDiscursiveEnabled(false);
-      setEssayEnabled(true);
-      setDiscursivePoints(0);
-      setEssayPoints(SCORE_LIMIT);
-      setObjectiveTotal(40);
-      setDisciplineState(buildDisciplineState(DEFAULT_COUNTS_MID));
+    if (modoConfiguracao === "meio") {
+      setDiscursivasAtivas(false);
+      setRedacaoAtiva(true);
+      setPontosDiscursivas(0);
+      setPontosRedacao(LIMITE_PONTUACAO_ESPECIAL);
+      setTotalProvaObjetiva(40);
+      setEstadoDisciplinas(construirEstadoDisciplinas(CONTAGENS_PADRAO_MEIO));
     }
 
-    if (setupMode === "free") {
-      setDiscursiveEnabled(false);
-      setEssayEnabled(false);
-      setDiscursivePoints(0);
-      setEssayPoints(0);
-      setObjectiveTotal(80);
-      setQuestionCount(freeQuestionCount);
-      regenerateQuestions(freeQuestionCount);
-      setDisciplineState(buildDisciplineState());
+    if (modoConfiguracao === "livre") {
+      setDiscursivasAtivas(false);
+      setRedacaoAtiva(false);
+      setPontosDiscursivas(0);
+      setPontosRedacao(0);
+      setTotalProvaObjetiva(80);
+      setQuantidadeQuestoesModoLivre(quantidadeQuestoesLivre);
+      regenerarQuestoesModoLivre(quantidadeQuestoesLivre);
+      setEstadoDisciplinas(construirEstadoDisciplinas());
     }
 
-    setSetupOpen(false);
+    setSobreposicaoAberta(false);
   };
 
   return (
     <main className="app">
-      <SetupOverlay
-        open={setupOpen}
-        setupMode={setupMode}
-        freeQuestionCount={freeQuestionCount}
-        onSetupModeChange={setSetupMode}
-        onFreeQuestionCountChange={(value) =>
-          setFreeQuestionCount(clampInt(value, freeQuestionCount))
-        }
-        onApply={applySetup}
-      />
-
-      <HeroSection
-        theme={theme}
-        targetMode={targetMode}
-        targetScore={targetScore}
-        summary={summary}
-        customTargetScore={customTargetScore}
-        onCustomTargetChange={(value) =>
-          setCustomTargetScore(clampFloat(value, customTargetScore))
-        }
-        onTargetModeChange={setTargetMode}
-        onToggleTheme={() =>
-          setTheme((prev) => (prev === "dark" ? "light" : "dark"))
-        }
-      />
-
-      <ControlsPanel
-        isFreeMode={isFreeMode}
-        questionCount={questionCount}
-        totalObjectiveQuestions={totalObjectiveQuestions}
-        objectiveTotal={objectiveTotal}
-        discursivePoints={discursivePoints}
-        essayPoints={essayPoints}
-        discursiveEnabled={discursiveEnabled}
-        essayEnabled={essayEnabled}
-        onQuestionCountChange={(value) =>
-          setQuestionCount(clampInt(value, questionCount))
-        }
-        onObjectiveTotalChange={(value) =>
-          setObjectiveTotal(clampFloat(value, objectiveTotal))
-        }
-        onDiscursivePointsChange={(value) =>
-          setDiscursivePoints(
-            Math.min(SCORE_LIMIT, clampFloat(value, discursivePoints)),
+      <SobreposicaoConfiguracao
+        aberta={sobreposicaoAberta}
+        modoSelecionado={modoConfiguracao}
+        quantidadeQuestoesLivre={quantidadeQuestoesLivre}
+        onModoSelecionadoChange={setModoConfiguracao}
+        onQuantidadeQuestoesLivreChange={(valor) =>
+          setQuantidadeQuestoesLivre(
+            limitarInteiroNaoNegativo(valor, quantidadeQuestoesLivre),
           )
         }
-        onEssayPointsChange={(value) =>
-          setEssayPoints(Math.min(SCORE_LIMIT, clampFloat(value, essayPoints)))
+        onAplicar={aplicarConfiguracaoInicial}
+      />
+
+      <SecaoPrincipal
+        tema={tema}
+        modoMeta={modoMeta}
+        pontuacaoMeta={pontuacaoMeta}
+        resumo={resumo}
+        valorMetaPersonalizada={metaPersonalizada}
+        onMetaPersonalizadaChange={(valor) =>
+          setMetaPersonalizada(
+            limitarDecimalNaoNegativo(valor, metaPersonalizada),
+          )
         }
-        onGenerateQuestions={() => regenerateQuestions()}
-        onResetAnswers={handleResetAnswers}
-        onOpenSetup={() => setSetupOpen(true)}
-        onToggleDiscursive={(checked) => {
-          setDiscursiveEnabled(checked);
-          if (checked && discursivePoints === 0) {
-            setDiscursivePoints(SCORE_LIMIT);
+        onModoMetaChange={setModoMeta}
+        onTemaToggle={() =>
+          setTema((temaAnterior) =>
+            temaAnterior === "dark" ? "light" : "dark",
+          )
+        }
+      />
+
+      <PainelControles
+        modoLivreAtivo={modoLivreAtivo}
+        quantidadeQuestoesLivre={quantidadeQuestoesModoLivre}
+        totalQuestoesObjetivas={totalQuestoesObjetivas}
+        totalProvaObjetiva={totalProvaObjetiva}
+        pontosDiscursivas={pontosDiscursivas}
+        pontosRedacao={pontosRedacao}
+        discursivasAtivas={discursivasAtivas}
+        redacaoAtiva={redacaoAtiva}
+        onQuantidadeQuestoesLivreChange={(valor) =>
+          setQuantidadeQuestoesModoLivre(
+            limitarInteiroNaoNegativo(valor, quantidadeQuestoesModoLivre),
+          )
+        }
+        onTotalProvaObjetivaChange={(valor) =>
+          setTotalProvaObjetiva(
+            limitarDecimalNaoNegativo(valor, totalProvaObjetiva),
+          )
+        }
+        onPontosDiscursivasChange={(valor) =>
+          setPontosDiscursivas(
+            Math.min(
+              LIMITE_PONTUACAO_ESPECIAL,
+              limitarDecimalNaoNegativo(valor, pontosDiscursivas),
+            ),
+          )
+        }
+        onPontosRedacaoChange={(valor) =>
+          setPontosRedacao(
+            Math.min(
+              LIMITE_PONTUACAO_ESPECIAL,
+              limitarDecimalNaoNegativo(valor, pontosRedacao),
+            ),
+          )
+        }
+        onGerarQuestoes={() => regenerarQuestoesModoLivre()}
+        onZerarRespostas={zerarRespostas}
+        onAbrirConfiguracao={() => setSobreposicaoAberta(true)}
+        onDiscursivasToggle={(ativo) => {
+          setDiscursivasAtivas(ativo);
+          if (ativo && pontosDiscursivas === 0) {
+            setPontosDiscursivas(LIMITE_PONTUACAO_ESPECIAL);
           }
         }}
-        onToggleEssay={(checked) => {
-          setEssayEnabled(checked);
-          if (checked && essayPoints === 0) {
-            setEssayPoints(SCORE_LIMIT);
+        onRedacaoToggle={(ativo) => {
+          setRedacaoAtiva(ativo);
+          if (ativo && pontosRedacao === 0) {
+            setPontosRedacao(LIMITE_PONTUACAO_ESPECIAL);
           }
         }}
       />
 
-      {!isFreeMode ? (
-        <CoursePanel
-          courses={courses}
-          selectedCourse={selectedCourse}
-          selectedCourseCode={selectedCourseCode}
-          useEqualWeights={useEqualWeights}
-          weightedTotal={weightedTotal}
-          disciplineTotals={disciplineTotals}
-          disciplineState={disciplineState}
-          questionValue={questionValue}
-          showCutoffs={examMode === "final"}
-          onCourseChange={setSelectedCourseCode}
-          onToggleEqualWeights={setUseEqualWeights}
-          onToggleDisciplineOpen={toggleDisciplineOpen}
-          onDisciplineQuestionCountChange={updateDisciplineQuestionCount}
-          onResetDisciplineAnswers={resetDisciplineAnswers}
-          onDisciplineDirectScoreChange={(key, value) =>
-            updateDiscipline(key, (state) => ({
-              ...state,
-              directScore: clampFloat(value, state.directScore),
+      {!modoLivreAtivo ? (
+        <PainelCurso
+          cursos={cursos}
+          cursoSelecionado={cursoSelecionado}
+          codigoCursoSelecionado={codigoCursoSelecionado}
+          usarPesosIguais={usarPesosIguais}
+          somatorioPonderado={somatorioPonderado}
+          totaisDisciplinas={totaisDisciplinas}
+          estadoDisciplinas={estadoDisciplinas}
+          valorQuestao={valorQuestao}
+          exibirCortes={modoProva === "final"}
+          onCursoChange={setCodigoCursoSelecionado}
+          onPesosIguaisToggle={setUsarPesosIguais}
+          onDisciplinaAberturaToggle={alternarAberturaDisciplina}
+          onQuantidadeQuestoesDisciplinaChange={
+            alterarQuantidadeQuestoesDisciplina
+          }
+          onZerarRespostasDisciplina={zerarRespostasDisciplinas}
+          onNotaDiretaDisciplinaChange={(chaveDisciplina, valor) =>
+            atualizarEstadoDisciplina(chaveDisciplina, (estadoAtual) => ({
+              ...estadoAtual,
+              notaDireta: limitarDecimalNaoNegativo(
+                valor,
+                estadoAtual.notaDireta,
+              ),
             }))
           }
-          onToggleDisciplineDirectScore={(key, checked) =>
-            updateDiscipline(key, (state) => ({
-              ...state,
-              directScoreEnabled: checked,
+          onNotaDiretaDisciplinaToggle={(chaveDisciplina, ativo) =>
+            atualizarEstadoDisciplina(chaveDisciplina, (estadoAtual) => ({
+              ...estadoAtual,
+              notaDiretaAtiva: ativo,
             }))
           }
-          onDisciplineQuestionChange={handleDisciplineQuestionChange}
-          onToggleQuestionDirectScore={toggleQuestionDirectScore}
+          onQuestaoDisciplinaChange={alterarQuestaoDisciplina}
+          onNotaDiretaQuestaoToggle={alternarNotaDiretaQuestaoDisciplina}
         />
       ) : null}
 
-      {isFreeMode ? (
-        <FreeQuestions
-          questions={questions}
-          scores={summary.scores}
-          onQuestionChange={handleQuestionChange}
-          onToggleQuestionDirectScore={toggleFreeQuestionDirectScore}
+      {modoLivreAtivo ? (
+        <PainelQuestoesLivres
+          questoes={questoesModoLivre}
+          pontuacoesQuestoes={resumo.pontuacoes}
+          onQuestaoChange={alterarQuestaoModoLivre}
+          onNotaDiretaQuestaoToggle={alternarNotaDiretaQuestaoModoLivre}
         />
       ) : null}
 
-      <FooterSection summary={summary} />
+      <SecaoRodape resumo={resumo} />
     </main>
   );
 }

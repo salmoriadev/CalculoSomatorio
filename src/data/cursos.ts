@@ -1,36 +1,40 @@
-export type DisciplineKey =
-  | 'PLI'
-  | 'SLI'
-  | 'MTM'
-  | 'BLG'
-  | 'QMC'
-  | 'FSC'
-  | 'CHS'
-  | 'RDC'
-  | 'DSC'
+/**
+ * Fonte e parser dos dados de cursos UFSC.
+ * Converte a tabela bruta em uma estrutura tipada de cursos/pesos/cortes.
+ */
+export type ChaveDisciplina =
+  | "PLI"
+  | "SLI"
+  | "MTM"
+  | "BLG"
+  | "QMC"
+  | "FSC"
+  | "CHS"
+  | "RDC"
+  | "DSC";
 
-export type Course = {
-  code: string
-  name: string
-  campus: string
-  weights: Record<DisciplineKey, number>
-  cutoffs: Record<DisciplineKey, number>
-  pmc: number
-}
+export type Curso = {
+  codigo: string;
+  nome: string;
+  campus: string;
+  pesos: Record<ChaveDisciplina, number>;
+  cortes: Record<ChaveDisciplina, number>;
+  pmc: number;
+};
 
-const DISCIPLINES: DisciplineKey[] = [
-  'PLI',
-  'SLI',
-  'MTM',
-  'BLG',
-  'QMC',
-  'FSC',
-  'CHS',
-  'RDC',
-  'DSC',
-]
+const CHAVES_DISCIPLINAS: ChaveDisciplina[] = [
+  "PLI",
+  "SLI",
+  "MTM",
+  "BLG",
+  "QMC",
+  "FSC",
+  "CHS",
+  "RDC",
+  "DSC",
+];
 
-const RAW = `
+const DADOS_BRUTOS = `
 301 ADMINISTRAÇÃO - BEL - MATUTINO FLORIANÓPOLIS 3 1 3 1 1 1 2 3 2 3 0,5 2 0 0 0 2 3 0 194
 316 ADMINISTRAÇÃO - BEL - NOTURNO FLORIANÓPOLIS 3 1 3 1 1 1 2 3 2 3 0,5 2 0 0 0 2 3 0 194
 555 AGRONOMIA - BEL - INTEGRAL9 CURITIBANOS 1 1 1 1 1 1 1 1,5 1 2 0,5 0,5 0,5 0,5 0,5 2 3 0 105
@@ -131,87 +135,95 @@ const RAW = `
 238 SISTEMAS DE INFORMAÇÃO - BEL - NOTURNO FLORIANÓPOLIS 2 1 4 1 1 3 1 1,5 2 3 1 2 1 1 2 1 3 0 177
 652 TECNOLOGIAS DA INFORMAÇÃO E COMUNICAÇÃO - BEL - NOTURNO ARARANGUÁ 1 1 1,5 1 1 1 1 1,5 1 0,9 0,5 1,3 0 0 0 0,5 1,4 0 110
 502 ZOOTECNIA - BEL - INTEGRAL9 FLORIANÓPOLIS 1 1 1 1 1 1 1 1,5 1 3 0,5 0,5 0,5 0,5 0,5 2 3 0 105
-`
+`;
 
-const parseNumber = (value: string) => Number(value.replace(',', '.'))
+const converterParaNumero = (valor: string) => Number(valor.replace(",", "."));
 
-const isNumericToken = (token: string) => {
-  if (/[A-Za-zÀ-ÖØ-öø-ÿ]/.test(token)) return false
-  const cleaned = token.replace(/[^0-9,.-]/g, '')
-  return /^[0-9]+([.,][0-9]+)?$/.test(cleaned)
-}
+const tokenEhNumerico = (token: string) => {
+  if (/[A-Za-zÀ-ÖØ-öø-ÿ]/.test(token)) return false;
+  const cleaned = token.replace(/[^0-9,.-]/g, "");
+  return /^[0-9]+([.,][0-9]+)?$/.test(cleaned);
+};
 
-const parseCourseSegment = (segment: string): Course | null => {
-  const tokens = segment.trim().split(/\s+/)
-  const code = tokens[0]
-  if (!/^\d{1,3}$/.test(code)) return null
+const parsearTrechoCurso = (trecho: string): Curso | null => {
+  const tokens = trecho.trim().split(/\s+/);
+  const codigo = tokens[0];
+  if (!/^\d{1,3}$/.test(codigo)) return null;
 
-  const numericTokens: string[] = []
+  const tokensNumericos: string[] = [];
   for (let i = tokens.length - 1; i > 0; i -= 1) {
-    if (numericTokens.length >= 19) break
-    const token = tokens[i]
-    if (isNumericToken(token)) {
-      numericTokens.unshift(token)
-    } else if (numericTokens.length > 0) {
-      break
+    if (tokensNumericos.length >= 19) break;
+    const token = tokens[i];
+    if (tokenEhNumerico(token)) {
+      tokensNumericos.unshift(token);
+    } else if (tokensNumericos.length > 0) {
+      break;
     }
   }
 
-  if (numericTokens.length !== 19) return null
+  if (tokensNumericos.length !== 19) return null;
 
-  const nameTokens = tokens.slice(1, tokens.length - 19)
-  if (nameTokens.length < 2) return null
+  const tokensNome = tokens.slice(1, tokens.length - 19);
+  if (tokensNome.length < 2) return null;
 
-  const campus = nameTokens[nameTokens.length - 1]
-  const name = nameTokens.slice(0, -1).join(' ')
+  const campus = tokensNome[tokensNome.length - 1];
+  const nome = tokensNome.slice(0, -1).join(" ");
 
-  const weightTokens = numericTokens.slice(0, 9)
-  const cutoffTokens = numericTokens.slice(9, 18)
-  const pmcToken = numericTokens[18]
+  const tokensPeso = tokensNumericos.slice(0, 9);
+  const tokensCorte = tokensNumericos.slice(9, 18);
+  const tokenPmc = tokensNumericos[18];
 
-  const weights = DISCIPLINES.reduce((acc, key, index) => {
-    acc[key] = parseNumber(weightTokens[index])
-    return acc
-  }, {} as Record<DisciplineKey, number>)
+  const pesos = CHAVES_DISCIPLINAS.reduce(
+    (acumulador, chave, indice) => {
+      acumulador[chave] = converterParaNumero(tokensPeso[indice]);
+      return acumulador;
+    },
+    {} as Record<ChaveDisciplina, number>,
+  );
 
-  const cutoffs = DISCIPLINES.reduce((acc, key, index) => {
-    acc[key] = parseNumber(cutoffTokens[index])
-    return acc
-  }, {} as Record<DisciplineKey, number>)
+  const cortes = CHAVES_DISCIPLINAS.reduce(
+    (acumulador, chave, indice) => {
+      acumulador[chave] = converterParaNumero(tokensCorte[indice]);
+      return acumulador;
+    },
+    {} as Record<ChaveDisciplina, number>,
+  );
 
   return {
-    code,
-    name,
+    codigo,
+    nome,
     campus,
-    weights,
-    cutoffs,
-    pmc: parseNumber(pmcToken),
-  }
-}
+    pesos,
+    cortes,
+    pmc: converterParaNumero(tokenPmc),
+  };
+};
 
-const parseCourses = (raw: string): Course[] => {
-  const normalized = raw.replace(/\s+/g, ' ').trim()
+const parsearCursos = (dadosBrutos: string): Curso[] => {
+  const textoNormalizado = dadosBrutos.replace(/\s+/g, " ").trim();
   const matches = Array.from(
-    normalized.matchAll(/\b\d{1,3}\s+[A-ZÁÉÍÓÚÃÕÇ]/g)
-  )
-  const indices = matches.map((match) => match.index ?? 0)
-  const segments = indices.map((start, index) => {
-    const end = indices[index + 1] ?? normalized.length
-    return normalized.slice(start, end)
-  })
+    textoNormalizado.matchAll(/\b\d{1,3}\s+[A-ZÁÉÍÓÚÃÕÇ]/g),
+  );
+  const indices = matches.map((correspondencia) => correspondencia.index ?? 0);
+  const trechos = indices.map((inicio, indice) => {
+    const fim = indices[indice + 1] ?? textoNormalizado.length;
+    return textoNormalizado.slice(inicio, fim);
+  });
 
-  const courses = segments
-    .map((segment) => parseCourseSegment(segment))
-    .filter((course): course is Course => Boolean(course))
+  const cursos = trechos
+    .map((trecho) => parsearTrechoCurso(trecho))
+    .filter((curso): curso is Curso => Boolean(curso));
 
-  const unique = new Map<string, Course>()
-  courses.forEach((course) => {
-    unique.set(course.code, course)
-  })
+  const cursosUnicos = new Map<string, Curso>();
+  cursos.forEach((curso) => {
+    cursosUnicos.set(curso.codigo, curso);
+  });
 
-  return Array.from(unique.values()).sort((a, b) => a.name.localeCompare(b.name))
-}
+  return Array.from(cursosUnicos.values()).sort((a, b) =>
+    a.nome.localeCompare(b.nome),
+  );
+};
 
-const courses = parseCourses(RAW)
+const cursos = parsearCursos(DADOS_BRUTOS);
 
-export default courses
+export default cursos;

@@ -1,23 +1,29 @@
-import type { Summary } from "../types/exam";
-import { formatScore } from "../utils/format";
+/**
+ * Rodapé informativo da simulação.
+ * Mostra o resumo final e os créditos do projeto.
+ */
+import type { Resumo } from "../types/prova";
+import { formatarPontuacao } from "../utils/formatacao";
 
-type FooterSectionProps = {
-  summary: Summary;
+type PropriedadesSecaoRodape = {
+  resumo: Resumo;
 };
 
-const FooterSection = ({ summary }: FooterSectionProps) => (
+const SecaoRodape = ({ resumo }: PropriedadesSecaoRodape) => (
   <footer className="panel footer">
     <div>
       <h2>Resumo final</h2>
       <p>
-        Resultado objetivo:{" "}
-        <strong>{formatScore(summary.objectiveScore)}</strong> pontos. Total
-        geral: <strong>{formatScore(summary.total)}</strong> pontos.
+        Resultado objetivo: <strong>{formatarPontuacao(resumo.pontuacaoObjetiva)}</strong>{" "}
+        pontos. Total geral: <strong>{formatarPontuacao(resumo.total)}</strong>{" "}
+        pontos.
       </p>
     </div>
+
     <div className="footer-tip">
       <span>Fórmula oficial</span>
       <strong>P = (NP - (NTPC - (NPC - NPI))) / NP</strong>
+
       <div className="footer-credits">
         <span>Feito por</span>
         <a
@@ -27,6 +33,7 @@ const FooterSection = ({ summary }: FooterSectionProps) => (
         >
           Arthur de Farias Salmoria
         </a>
+
         <div className="footer-socials">
           <a
             href="https://www.linkedin.com/in/arthursalmoria"
@@ -36,6 +43,7 @@ const FooterSection = ({ summary }: FooterSectionProps) => (
           >
             <img src="/linkedin.png" alt="LinkedIn" />
           </a>
+
           <a
             href="https://github.com/salmoriadev"
             target="_blank"
@@ -50,4 +58,4 @@ const FooterSection = ({ summary }: FooterSectionProps) => (
   </footer>
 );
 
-export default FooterSection;
+export default SecaoRodape;

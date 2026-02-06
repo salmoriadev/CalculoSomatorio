@@ -1,3 +1,6 @@
+/*
+ * Estilos específicos da interface da aplicação (componentes e layout).
+ */
 .app {
     min-height: 100vh;
     padding: 0 6vw 72px;
@@ -268,12 +271,13 @@
     list-style: none;
     margin: 0;
     padding: 6px;
-    background: var(--field-bg);
-    border: 1px solid var(--field-border);
+    background: var(--dropdown-bg);
+    border: 1px solid var(--dropdown-border);
     border-radius: 14px;
     box-shadow: var(--panel-shadow);
     max-height: 180px;
     overflow-y: auto;
+    backdrop-filter: none;
 }
 
 .target-select__option {

@@ -1,3 +1,6 @@
+/*
+ * Estilos globais, variáveis de tema e reset base da aplicação.
+ */
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
 :root {
@@ -24,6 +27,8 @@
     --panel-shadow: 0 18px 40px rgba(5, 10, 30, 0.35);
     --field-bg: rgba(9, 12, 20, 0.7);
     --field-border: rgba(255, 255, 255, 0.12);
+    --dropdown-bg: #0b1326;
+    --dropdown-border: rgba(166, 193, 255, 0.26);
     --card-bg: rgba(15, 22, 40, 0.78);
     --card-border: rgba(255, 255, 255, 0.12);
     --card-hover: rgba(255, 255, 255, 0.08);
@@ -80,6 +85,8 @@
     --panel-shadow: 0 16px 36px rgba(15, 23, 42, 0.12);
     --field-bg: #ffffff;
     --field-border: rgba(15, 23, 42, 0.22);
+    --dropdown-bg: #ffffff;
+    --dropdown-border: rgba(15, 23, 42, 0.18);
     --card-bg: rgba(240, 246, 255, 0.95);
     --card-border: rgba(15, 23, 42, 0.1);
     --card-hover: rgba(11, 99, 209, 0.08);
