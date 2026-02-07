@@ -4,6 +4,9 @@
 
 Web app to simulate UFSC summatory scoring, including per-question calculation, essay/discursive sections, and course-specific weights.
 
+## Architecture
+- Diagram and file responsibilities: `docs/ARQUITETURA.md`
+
 ## Main features
 - Official UFSC per-question formula.
 - Support for proposition-sum questions (`01, 02, 04, 08, 16, 32, 64`) and open questions.

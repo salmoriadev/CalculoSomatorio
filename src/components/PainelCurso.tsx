@@ -7,10 +7,10 @@ import {
   DISCIPLINAS_ESPECIAIS,
   DISCIPLINAS_OBJETIVAS,
 } from "../data/disciplinas";
-import { formatarPontuacao } from "../utils/formatacao";
+import { exibirNumeroOuVazio, formatarPontuacao } from "../utils/formatacao";
 import { calcularPontuacaoQuestao } from "../utils/pontuacao";
 import type { EstadoDisciplina, Questao } from "../types/prova";
-import { VALORES_MAX_PROPOSICAO } from "../types/prova";
+import CamposQuestao from "./CamposQuestao";
 
 type PropriedadesPainelCurso = {
   cursos: Curso[];
@@ -68,8 +68,6 @@ const PainelCurso = ({
   onQuestaoDisciplinaChange,
   onNotaDiretaQuestaoToggle,
 }: PropriedadesPainelCurso) => {
-  const exibirValor = (valor: number) => (valor === 0 ? "" : valor);
-
   return (
     <section className="panel course-panel">
       <div className="course-header">
@@ -138,7 +136,9 @@ const PainelCurso = ({
               const corteDisciplina = cursoSelecionado.cortes[disciplina.chave];
               const notaDisciplina = totaisDisciplinas[disciplina.chave];
               const abaixoDoCorte =
-                exibirCortes && notaDisciplina > 0 && notaDisciplina < corteDisciplina;
+                exibirCortes &&
+                notaDisciplina > 0 &&
+                notaDisciplina < corteDisciplina;
 
               return (
                 <div
@@ -188,7 +188,9 @@ const PainelCurso = ({
                             type="number"
                             min={0}
                             placeholder="Ex: 12"
-                            value={exibirValor(estadoDisciplinaAtual.quantidadeQuestoes)}
+                            value={exibirNumeroOuVazio(
+                              estadoDisciplinaAtual.quantidadeQuestoes,
+                            )}
                             onChange={(evento) =>
                               onQuantidadeQuestoesDisciplinaChange(
                                 disciplina.chave,
@@ -205,7 +207,9 @@ const PainelCurso = ({
                             min={0}
                             step={0.1}
                             placeholder="Ex: 6.50"
-                            value={exibirValor(estadoDisciplinaAtual.notaDireta)}
+                            value={exibirNumeroOuVazio(
+                              estadoDisciplinaAtual.notaDireta,
+                            )}
                             disabled={!estadoDisciplinaAtual.notaDiretaAtiva}
                             onChange={(evento) =>
                               onNotaDiretaDisciplinaChange(
@@ -232,7 +236,9 @@ const PainelCurso = ({
 
                         <button
                           className="ghost"
-                          onClick={() => onZerarRespostasDisciplina(disciplina.chave)}
+                          onClick={() =>
+                            onZerarRespostasDisciplina(disciplina.chave)
+                          }
                           type="button"
                         >
                           Zerar respostas
@@ -252,7 +258,10 @@ const PainelCurso = ({
                                 questao,
                                 valorQuestao,
                               );
-                              const notaBrutaQuestao = Math.max(0, resultadoQuestao.bruta);
+                              const notaBrutaQuestao = Math.max(
+                                0,
+                                resultadoQuestao.bruta,
+                              );
 
                               return (
                                 <div
@@ -263,109 +272,39 @@ const PainelCurso = ({
                                     <div>
                                       <p>
                                         Questão{" "}
-                                        {String(indiceQuestao + 1).padStart(2, "0")}
+                                        {String(indiceQuestao + 1).padStart(
+                                          2,
+                                          "0",
+                                        )}
                                       </p>
-                                      <h4>{formatarPontuacao(notaBrutaQuestao)} pts</h4>
+                                      <h4>
+                                        {formatarPontuacao(notaBrutaQuestao)}{" "}
+                                        pts
+                                      </h4>
                                     </div>
                                     <span className="badge">
                                       {formatarPontuacao(notaBrutaQuestao)}
                                     </span>
                                   </header>
 
-                                  <div className="question-inputs">
-                                    <label>
-                                      Candidato (soma marcada)
-                                      <input
-                                        type="number"
-                                        min={0}
-                                        placeholder="Ex: 04"
-                                        value={exibirValor(questao.candidato)}
-                                        onChange={(evento) =>
-                                          onQuestaoDisciplinaChange(
-                                            disciplina.chave,
-                                            indiceQuestao,
-                                            "candidato",
-                                            evento.target.value,
-                                          )
-                                        }
-                                      />
-                                    </label>
-
-                                    <label>
-                                      Gabarito (soma correta)
-                                      <input
-                                        type="number"
-                                        min={0}
-                                        placeholder="Ex: 03"
-                                        value={exibirValor(questao.gabarito)}
-                                        onChange={(evento) =>
-                                          onQuestaoDisciplinaChange(
-                                            disciplina.chave,
-                                            indiceQuestao,
-                                            "gabarito",
-                                            evento.target.value,
-                                          )
-                                        }
-                                      />
-                                    </label>
-
-                                    <label>
-                                      Maior proposição
-                                      <select
-                                        value={String(questao.maximoProposicao)}
-                                        onChange={(evento) =>
-                                          onQuestaoDisciplinaChange(
-                                            disciplina.chave,
-                                            indiceQuestao,
-                                            "maximoProposicao",
-                                            evento.target.value,
-                                          )
-                                        }
-                                      >
-                                        {VALORES_MAX_PROPOSICAO.map((valor) => (
-                                          <option key={valor} value={valor}>
-                                            {String(valor).padStart(2, "0")}
-                                          </option>
-                                        ))}
-                                        <option value="aberta">Aberta</option>
-                                      </select>
-                                    </label>
-
-                                    <label className="toggle small">
-                                      <input
-                                        type="checkbox"
-                                        checked={questao.notaDiretaAtiva}
-                                        onChange={(evento) =>
-                                          onNotaDiretaQuestaoToggle(
-                                            disciplina.chave,
-                                            indiceQuestao,
-                                            evento.target.checked,
-                                          )
-                                        }
-                                      />
-                                      Usar nota direta
-                                    </label>
-
-                                    <label>
-                                      Nota da questão (pts)
-                                      <input
-                                        type="number"
-                                        min={0}
-                                        step={0.1}
-                                        placeholder="Ex: 0.80"
-                                        value={exibirValor(questao.notaDireta)}
-                                        disabled={!questao.notaDiretaAtiva}
-                                        onChange={(evento) =>
-                                          onQuestaoDisciplinaChange(
-                                            disciplina.chave,
-                                            indiceQuestao,
-                                            "notaDireta",
-                                            evento.target.value,
-                                          )
-                                        }
-                                      />
-                                    </label>
-                                  </div>
+                                  <CamposQuestao
+                                    questao={questao}
+                                    onCampoQuestaoChange={(campo, valor) =>
+                                      onQuestaoDisciplinaChange(
+                                        disciplina.chave,
+                                        indiceQuestao,
+                                        campo,
+                                        valor,
+                                      )
+                                    }
+                                    onNotaDiretaToggle={(ativo) =>
+                                      onNotaDiretaQuestaoToggle(
+                                        disciplina.chave,
+                                        indiceQuestao,
+                                        ativo,
+                                      )
+                                    }
+                                  />
                                 </div>
                               );
                             },
@@ -387,7 +326,9 @@ const PainelCurso = ({
               const corteDisciplina = cursoSelecionado.cortes[disciplina.chave];
               const notaDisciplina = totaisDisciplinas[disciplina.chave];
               const abaixoDoCorte =
-                exibirCortes && notaDisciplina > 0 && notaDisciplina < corteDisciplina;
+                exibirCortes &&
+                notaDisciplina > 0 &&
+                notaDisciplina < corteDisciplina;
 
               return (
                 <div

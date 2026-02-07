@@ -2,6 +2,8 @@
  * Painel com controles gerais da simulação.
  * Permite configurar totais, redação/discursivas e ações rápidas.
  */
+import { exibirNumeroOuVazio } from "../utils/formatacao";
+
 type PropriedadesPainelControles = {
   modoLivreAtivo: boolean;
   quantidadeQuestoesLivre: number;
@@ -41,8 +43,6 @@ const PainelControles = ({
   onDiscursivasToggle,
   onRedacaoToggle,
 }: PropriedadesPainelControles) => {
-  const exibirValor = (valor: number) => (valor === 0 ? "" : valor);
-
   return (
     <section className="panel controls">
       <div className="control-group">
@@ -54,8 +54,8 @@ const PainelControles = ({
           placeholder="Ex: 60"
           value={
             modoLivreAtivo
-              ? exibirValor(quantidadeQuestoesLivre)
-              : exibirValor(totalQuestoesObjetivas)
+              ? exibirNumeroOuVazio(quantidadeQuestoesLivre)
+              : exibirNumeroOuVazio(totalQuestoesObjetivas)
           }
           disabled={!modoLivreAtivo}
           onChange={(evento) => {
@@ -73,7 +73,7 @@ const PainelControles = ({
           min={0}
           step={0.1}
           placeholder="Ex: 80"
-          value={exibirValor(totalProvaObjetiva)}
+          value={exibirNumeroOuVazio(totalProvaObjetiva)}
           onChange={(evento) => onTotalProvaObjetivaChange(evento.target.value)}
         />
       </div>
@@ -87,7 +87,7 @@ const PainelControles = ({
           max={10}
           step={0.1}
           placeholder="Ex: 10"
-          value={exibirValor(discursivasAtivas ? pontosDiscursivas : 0)}
+          value={exibirNumeroOuVazio(discursivasAtivas ? pontosDiscursivas : 0)}
           disabled={!discursivasAtivas}
           onChange={(evento) => onPontosDiscursivasChange(evento.target.value)}
         />
@@ -105,7 +105,7 @@ const PainelControles = ({
           max={10}
           step={0.1}
           placeholder="Ex: 10"
-          value={exibirValor(redacaoAtiva ? pontosRedacao : 0)}
+          value={exibirNumeroOuVazio(redacaoAtiva ? pontosRedacao : 0)}
           disabled={!redacaoAtiva}
           onChange={(evento) => onPontosRedacaoChange(evento.target.value)}
         />

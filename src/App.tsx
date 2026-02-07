@@ -35,12 +35,20 @@ import {
 import {
   limitarDecimalNaoNegativo,
   limitarInteiroNaoNegativo,
-  parsearMaximoProposicao,
 } from "./utils/formatacao";
+import {
+  alternarNotaDiretaQuestao,
+  atualizarCampoQuestao,
+  atualizarQuestaoNoIndice,
+  zerarRespostaQuestao,
+} from "./utils/manipulacaoQuestoes";
 import { calcularPontuacaoQuestao } from "./utils/pontuacao";
 import "./App.css";
 
 const LIMITE_PONTUACAO_ESPECIAL = 10;
+const TOTAL_OBJETIVA_FINAL = 80;
+const TOTAL_OBJETIVA_MEIO = 40;
+const QUANTIDADE_QUESTOES_INICIAL = 10;
 
 function App() {
   const [tema, setTema] = useState<"dark" | "light">(() => {
@@ -56,21 +64,26 @@ function App() {
   const [modoConfiguracao, setModoConfiguracao] = useState<ModoProva>("final");
   const [modoProva, setModoProva] = useState<ModoProva>("final");
 
-  const [quantidadeQuestoesLivre, setQuantidadeQuestoesLivre] = useState(10);
+  const [quantidadeQuestoesLivre, setQuantidadeQuestoesLivre] = useState(
+    QUANTIDADE_QUESTOES_INICIAL,
+  );
   const [quantidadeQuestoesModoLivre, setQuantidadeQuestoesModoLivre] =
-    useState(10);
-  const [totalProvaObjetiva, setTotalProvaObjetiva] = useState(80);
+    useState(QUANTIDADE_QUESTOES_INICIAL);
+  const [totalProvaObjetiva, setTotalProvaObjetiva] =
+    useState(TOTAL_OBJETIVA_FINAL);
 
   const [modoMeta, setModoMeta] = useState<ModoMeta>("maior");
   const [metaPersonalizada, setMetaPersonalizada] = useState(0);
 
-  const [pontosDiscursivas, setPontosDiscursivas] = useState(10);
-  const [pontosRedacao, setPontosRedacao] = useState(10);
+  const [pontosDiscursivas, setPontosDiscursivas] = useState(
+    LIMITE_PONTUACAO_ESPECIAL,
+  );
+  const [pontosRedacao, setPontosRedacao] = useState(LIMITE_PONTUACAO_ESPECIAL);
   const [discursivasAtivas, setDiscursivasAtivas] = useState(true);
   const [redacaoAtiva, setRedacaoAtiva] = useState(true);
 
   const [questoesModoLivre, setQuestoesModoLivre] = useState<Questao[]>(() =>
-    construirQuestoes(10),
+    construirQuestoes(QUANTIDADE_QUESTOES_INICIAL),
   );
 
   const [estadoDisciplinas, setEstadoDisciplinas] = useState<
@@ -249,12 +262,7 @@ function App() {
 
   const zerarRespostasModoLivre = () => {
     setQuestoesModoLivre((questoesAnteriores) =>
-      questoesAnteriores.map((questao) => ({
-        ...questao,
-        candidato: 0,
-        notaDiretaAtiva: false,
-        notaDireta: 0,
-      })),
+      questoesAnteriores.map((questao) => zerarRespostaQuestao(questao)),
     );
   };
 
@@ -264,34 +272,11 @@ function App() {
     valor: string,
   ) => {
     setQuestoesModoLivre((questoesAnteriores) => {
-      const proximasQuestoes = [...questoesAnteriores];
-      const questaoAtual = proximasQuestoes[indiceQuestao];
-      if (!questaoAtual) return questoesAnteriores;
-
-      if (campo === "maximoProposicao") {
-        proximasQuestoes[indiceQuestao] = {
-          ...questaoAtual,
-          maximoProposicao: parsearMaximoProposicao(
-            valor,
-            questaoAtual.maximoProposicao,
-          ),
-        };
-      } else if (campo === "notaDireta") {
-        proximasQuestoes[indiceQuestao] = {
-          ...questaoAtual,
-          notaDireta: limitarDecimalNaoNegativo(valor, questaoAtual.notaDireta),
-        };
-      } else {
-        proximasQuestoes[indiceQuestao] = {
-          ...questaoAtual,
-          [campo]: limitarInteiroNaoNegativo(
-            valor,
-            questaoAtual[campo] as number,
-          ),
-        };
-      }
-
-      return proximasQuestoes;
+      return atualizarQuestaoNoIndice(
+        questoesAnteriores,
+        indiceQuestao,
+        (questaoAtual) => atualizarCampoQuestao(questaoAtual, campo, valor),
+      );
     });
   };
 
@@ -300,16 +285,11 @@ function App() {
     ativo: boolean,
   ) => {
     setQuestoesModoLivre((questoesAnteriores) => {
-      const proximasQuestoes = [...questoesAnteriores];
-      const questaoAtual = proximasQuestoes[indiceQuestao];
-      if (!questaoAtual) return questoesAnteriores;
-
-      proximasQuestoes[indiceQuestao] = {
-        ...questaoAtual,
-        notaDiretaAtiva: ativo,
-      };
-
-      return proximasQuestoes;
+      return atualizarQuestaoNoIndice(
+        questoesAnteriores,
+        indiceQuestao,
+        (questaoAtual) => alternarNotaDiretaQuestao(questaoAtual, ativo),
+      );
     });
   };
 
@@ -352,35 +332,14 @@ function App() {
   ) => {
     atualizarEstadoDisciplina(chaveDisciplina, (estadoAtual) => {
       const proximasQuestoes = [...estadoAtual.questoes];
-      const questaoAtual = proximasQuestoes[indiceQuestao];
-      if (!questaoAtual) return estadoAtual;
-
-      if (campo === "maximoProposicao") {
-        proximasQuestoes[indiceQuestao] = {
-          ...questaoAtual,
-          maximoProposicao: parsearMaximoProposicao(
-            valor,
-            questaoAtual.maximoProposicao,
-          ),
-        };
-      } else if (campo === "notaDireta") {
-        proximasQuestoes[indiceQuestao] = {
-          ...questaoAtual,
-          notaDireta: limitarDecimalNaoNegativo(valor, questaoAtual.notaDireta),
-        };
-      } else {
-        proximasQuestoes[indiceQuestao] = {
-          ...questaoAtual,
-          [campo]: limitarInteiroNaoNegativo(
-            valor,
-            questaoAtual[campo] as number,
-          ),
-        };
-      }
-
+      const questoesAtualizadas = atualizarQuestaoNoIndice(
+        proximasQuestoes,
+        indiceQuestao,
+        (questaoAtual) => atualizarCampoQuestao(questaoAtual, campo, valor),
+      );
       return {
         ...estadoAtual,
-        questoes: proximasQuestoes,
+        questoes: questoesAtualizadas,
       };
     });
   };
@@ -391,18 +350,14 @@ function App() {
     ativo: boolean,
   ) => {
     atualizarEstadoDisciplina(chaveDisciplina, (estadoAtual) => {
-      const proximasQuestoes = [...estadoAtual.questoes];
-      const questaoAtual = proximasQuestoes[indiceQuestao];
-      if (!questaoAtual) return estadoAtual;
-
-      proximasQuestoes[indiceQuestao] = {
-        ...questaoAtual,
-        notaDiretaAtiva: ativo,
-      };
-
+      const questoesAtualizadas = atualizarQuestaoNoIndice(
+        estadoAtual.questoes,
+        indiceQuestao,
+        (questaoAtual) => alternarNotaDiretaQuestao(questaoAtual, ativo),
+      );
       return {
         ...estadoAtual,
-        questoes: proximasQuestoes,
+        questoes: questoesAtualizadas,
       };
     });
   };
@@ -421,12 +376,9 @@ function App() {
           ...disciplinaAtual,
           notaDiretaAtiva: false,
           notaDireta: 0,
-          questoes: disciplinaAtual.questoes.map((questao) => ({
-            ...questao,
-            candidato: 0,
-            notaDiretaAtiva: false,
-            notaDireta: 0,
-          })),
+          questoes: disciplinaAtual.questoes.map((questao) =>
+            zerarRespostaQuestao(questao),
+          ),
         };
       });
 
@@ -445,33 +397,37 @@ function App() {
   const aplicarConfiguracaoInicial = () => {
     setModoProva(modoConfiguracao);
 
-    if (modoConfiguracao === "final") {
-      setDiscursivasAtivas(true);
-      setRedacaoAtiva(true);
-      setPontosDiscursivas(LIMITE_PONTUACAO_ESPECIAL);
-      setPontosRedacao(LIMITE_PONTUACAO_ESPECIAL);
-      setTotalProvaObjetiva(80);
-      setEstadoDisciplinas(construirEstadoDisciplinas(CONTAGENS_PADRAO_FINAL));
-    }
-
-    if (modoConfiguracao === "meio") {
-      setDiscursivasAtivas(false);
-      setRedacaoAtiva(true);
-      setPontosDiscursivas(0);
-      setPontosRedacao(LIMITE_PONTUACAO_ESPECIAL);
-      setTotalProvaObjetiva(40);
-      setEstadoDisciplinas(construirEstadoDisciplinas(CONTAGENS_PADRAO_MEIO));
-    }
-
-    if (modoConfiguracao === "livre") {
-      setDiscursivasAtivas(false);
-      setRedacaoAtiva(false);
-      setPontosDiscursivas(0);
-      setPontosRedacao(0);
-      setTotalProvaObjetiva(80);
-      setQuantidadeQuestoesModoLivre(quantidadeQuestoesLivre);
-      regenerarQuestoesModoLivre(quantidadeQuestoesLivre);
-      setEstadoDisciplinas(construirEstadoDisciplinas());
+    switch (modoConfiguracao) {
+      case "final":
+        setDiscursivasAtivas(true);
+        setRedacaoAtiva(true);
+        setPontosDiscursivas(LIMITE_PONTUACAO_ESPECIAL);
+        setPontosRedacao(LIMITE_PONTUACAO_ESPECIAL);
+        setTotalProvaObjetiva(TOTAL_OBJETIVA_FINAL);
+        setEstadoDisciplinas(
+          construirEstadoDisciplinas(CONTAGENS_PADRAO_FINAL),
+        );
+        break;
+      case "meio":
+        setDiscursivasAtivas(false);
+        setRedacaoAtiva(true);
+        setPontosDiscursivas(0);
+        setPontosRedacao(LIMITE_PONTUACAO_ESPECIAL);
+        setTotalProvaObjetiva(TOTAL_OBJETIVA_MEIO);
+        setEstadoDisciplinas(construirEstadoDisciplinas(CONTAGENS_PADRAO_MEIO));
+        break;
+      case "livre":
+        setDiscursivasAtivas(false);
+        setRedacaoAtiva(false);
+        setPontosDiscursivas(0);
+        setPontosRedacao(0);
+        setTotalProvaObjetiva(TOTAL_OBJETIVA_FINAL);
+        setQuantidadeQuestoesModoLivre(quantidadeQuestoesLivre);
+        regenerarQuestoesModoLivre(quantidadeQuestoesLivre);
+        setEstadoDisciplinas(construirEstadoDisciplinas());
+        break;
+      default:
+        break;
     }
 
     setSobreposicaoAberta(false);

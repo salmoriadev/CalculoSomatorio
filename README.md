@@ -4,6 +4,9 @@
 
 Aplicação web para simular a pontuação do somatório da UFSC, com suporte a cálculo por questão, redação, discursivas e pesos por curso.
 
+## Arquitetura
+- Diagrama e responsabilidades dos arquivos: `docs/ARQUITETURA.md`
+
 ## Principais recursos
 - Cálculo por questão com a fórmula oficial da UFSC.
 - Suporte para questões por somatório (01, 02, 04, 08, 16, 32, 64) e questões abertas.
