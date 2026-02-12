@@ -142,15 +142,58 @@ const SecaoPrincipal = ({
             </div>
           </div>
 
-          <button
-            className="theme-toggle"
-            type="button"
-            onClick={onTemaToggle}
-            aria-pressed={tema === "dark"}
-          >
-            <span className="theme-indicator" />
-            {tema === "dark" ? "Tema claro" : "Tema escuro"}
-          </button>
+          <div className="site-header-actions">
+            <div className="topbar-credits">
+              <span>Feito por</span>
+              <a
+                href="https://www.linkedin.com/in/arthursalmoria"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Arthur de Farias Salmoria
+              </a>
+
+              <div className="topbar-socials">
+                <a
+                  href="https://www.linkedin.com/in/arthursalmoria"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="LinkedIn"
+                >
+                  <img
+                    src="/linkedin.png"
+                    alt="LinkedIn"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </a>
+
+                <a
+                  href="https://github.com/salmoriadev"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="GitHub"
+                >
+                  <img
+                    src="/github.webp"
+                    alt="GitHub"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </a>
+              </div>
+            </div>
+
+            <button
+              className="theme-toggle"
+              type="button"
+              onClick={onTemaToggle}
+              aria-pressed={tema === "dark"}
+            >
+              <span className="theme-indicator" />
+              {tema === "dark" ? "Tema claro" : "Tema escuro"}
+            </button>
+          </div>
         </div>
       </div>
 
