@@ -1088,7 +1088,7 @@ button:active {
 
     .site-header {
         padding: 14px 16px;
-        border-radius: 20px;
+        border-radius: 0 0 20px 20px;
     }
 
     .site-header__inner {
