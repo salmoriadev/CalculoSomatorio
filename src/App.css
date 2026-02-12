@@ -1066,7 +1066,7 @@ button:active {
 
 @media (max-width: 600px) {
     .app {
-        padding: 20px 12px 40px;
+        padding: 0 12px 40px;
     }
 
     .panel {
