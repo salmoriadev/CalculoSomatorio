@@ -6,6 +6,7 @@
 import {
   lazy,
   Suspense,
+  startTransition,
   useCallback,
   useEffect,
   useMemo,
@@ -115,7 +116,14 @@ function App() {
 
   useEffect(() => {
     document.documentElement.dataset.theme = tema;
-    window.localStorage.setItem("ufsc-theme", tema);
+
+    const idTemporizador = window.setTimeout(() => {
+      window.localStorage.setItem("ufsc-theme", tema);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(idTemporizador);
+    };
   }, [tema]);
 
   useEffect(() => {
@@ -470,7 +478,11 @@ function App() {
   }, []);
 
   const alternarTema = useCallback(() => {
-    setTema((temaAnterior) => (temaAnterior === "dark" ? "light" : "dark"));
+    window.requestAnimationFrame(() => {
+      startTransition(() => {
+        setTema((temaAnterior) => (temaAnterior === "dark" ? "light" : "dark"));
+      });
+    });
   }, []);
 
   const alterarQuantidadeQuestoesModoLivre = useCallback((valor: string) => {
