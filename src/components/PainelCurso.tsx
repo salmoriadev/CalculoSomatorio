@@ -2,6 +2,7 @@
  * Painel detalhado por curso e disciplina.
  * Exibe pesos/cortes e permite preencher respostas disciplinares.
  */
+import { memo, useCallback, useMemo } from "react";
 import type { ChaveDisciplina, Curso } from "../data/cursos";
 import {
   DISCIPLINAS_ESPECIAIS,
@@ -47,6 +48,84 @@ type PropriedadesPainelCurso = {
     ativo: boolean,
   ) => void;
 };
+
+type PropriedadesQuestaoDisciplina = {
+  chaveDisciplina: ChaveDisciplina;
+  indiceQuestao: number;
+  questao: Questao;
+  valorQuestao: number;
+  onQuestaoDisciplinaChange: (
+    chave: ChaveDisciplina,
+    indiceQuestao: number,
+    campo: keyof Questao,
+    valor: string,
+  ) => void;
+  onNotaDiretaQuestaoToggle: (
+    chave: ChaveDisciplina,
+    indiceQuestao: number,
+    ativo: boolean,
+  ) => void;
+};
+
+const QuestaoDisciplina = memo(
+  ({
+    chaveDisciplina,
+    indiceQuestao,
+    questao,
+    valorQuestao,
+    onQuestaoDisciplinaChange,
+    onNotaDiretaQuestaoToggle,
+  }: PropriedadesQuestaoDisciplina) => {
+    const resultadoQuestao = useMemo(
+      () => calcularPontuacaoQuestao(questao, valorQuestao),
+      [questao, valorQuestao],
+    );
+    const notaBrutaQuestao = Math.max(0, resultadoQuestao.bruta);
+
+    const lidarCampoQuestaoChange = useCallback(
+      (campo: keyof Questao, valor: string) => {
+        onQuestaoDisciplinaChange(chaveDisciplina, indiceQuestao, campo, valor);
+      },
+      [chaveDisciplina, indiceQuestao, onQuestaoDisciplinaChange],
+    );
+
+    const lidarNotaDiretaToggle = useCallback(
+      (ativo: boolean) => {
+        onNotaDiretaQuestaoToggle(chaveDisciplina, indiceQuestao, ativo);
+      },
+      [chaveDisciplina, indiceQuestao, onNotaDiretaQuestaoToggle],
+    );
+
+    return (
+      <div className="discipline-question">
+        <header>
+          <div>
+            <p>Questão {String(indiceQuestao + 1).padStart(2, "0")}</p>
+            <h4>{formatarPontuacao(notaBrutaQuestao)} pts</h4>
+          </div>
+          <span className="badge">{formatarPontuacao(notaBrutaQuestao)}</span>
+        </header>
+
+        <CamposQuestao
+          questao={questao}
+          onCampoQuestaoChange={lidarCampoQuestaoChange}
+          onNotaDiretaToggle={lidarNotaDiretaToggle}
+        />
+      </div>
+    );
+  },
+  (propriedadesAnteriores, proximasPropriedades) =>
+    propriedadesAnteriores.questao === proximasPropriedades.questao &&
+    propriedadesAnteriores.valorQuestao === proximasPropriedades.valorQuestao &&
+    propriedadesAnteriores.chaveDisciplina ===
+      proximasPropriedades.chaveDisciplina &&
+    propriedadesAnteriores.indiceQuestao ===
+      proximasPropriedades.indiceQuestao &&
+    propriedadesAnteriores.onQuestaoDisciplinaChange ===
+      proximasPropriedades.onQuestaoDisciplinaChange &&
+    propriedadesAnteriores.onNotaDiretaQuestaoToggle ===
+      proximasPropriedades.onNotaDiretaQuestaoToggle,
+);
 
 const PainelCurso = ({
   cursos,
@@ -253,61 +332,21 @@ const PainelCurso = ({
                       ) : (
                         <div className="discipline-questions">
                           {estadoDisciplinaAtual.questoes.map(
-                            (questao, indiceQuestao) => {
-                              const resultadoQuestao = calcularPontuacaoQuestao(
-                                questao,
-                                valorQuestao,
-                              );
-                              const notaBrutaQuestao = Math.max(
-                                0,
-                                resultadoQuestao.bruta,
-                              );
-
-                              return (
-                                <div
-                                  key={`${disciplina.chave}-${indiceQuestao}`}
-                                  className="discipline-question"
-                                >
-                                  <header>
-                                    <div>
-                                      <p>
-                                        Questão{" "}
-                                        {String(indiceQuestao + 1).padStart(
-                                          2,
-                                          "0",
-                                        )}
-                                      </p>
-                                      <h4>
-                                        {formatarPontuacao(notaBrutaQuestao)}{" "}
-                                        pts
-                                      </h4>
-                                    </div>
-                                    <span className="badge">
-                                      {formatarPontuacao(notaBrutaQuestao)}
-                                    </span>
-                                  </header>
-
-                                  <CamposQuestao
-                                    questao={questao}
-                                    onCampoQuestaoChange={(campo, valor) =>
-                                      onQuestaoDisciplinaChange(
-                                        disciplina.chave,
-                                        indiceQuestao,
-                                        campo,
-                                        valor,
-                                      )
-                                    }
-                                    onNotaDiretaToggle={(ativo) =>
-                                      onNotaDiretaQuestaoToggle(
-                                        disciplina.chave,
-                                        indiceQuestao,
-                                        ativo,
-                                      )
-                                    }
-                                  />
-                                </div>
-                              );
-                            },
+                            (questao, indiceQuestao) => (
+                              <QuestaoDisciplina
+                                key={`${disciplina.chave}-${indiceQuestao}`}
+                                chaveDisciplina={disciplina.chave}
+                                indiceQuestao={indiceQuestao}
+                                questao={questao}
+                                valorQuestao={valorQuestao}
+                                onQuestaoDisciplinaChange={
+                                  onQuestaoDisciplinaChange
+                                }
+                                onNotaDiretaQuestaoToggle={
+                                  onNotaDiretaQuestaoToggle
+                                }
+                              />
+                            ),
                           )}
                         </div>
                       )}
@@ -379,4 +418,4 @@ const PainelCurso = ({
   );
 };
 
-export default PainelCurso;
+export default memo(PainelCurso);

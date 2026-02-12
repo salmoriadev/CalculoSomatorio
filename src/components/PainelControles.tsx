@@ -2,6 +2,7 @@
  * Painel com controles gerais da simulação.
  * Permite configurar totais, redação/discursivas e ações rápidas.
  */
+import { memo } from "react";
 import { exibirNumeroOuVazio } from "../utils/formatacao";
 
 type PropriedadesPainelControles = {
@@ -154,4 +155,4 @@ const PainelControles = ({
   );
 };
 
-export default PainelControles;
+export default memo(PainelControles);

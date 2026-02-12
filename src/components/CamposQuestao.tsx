@@ -2,6 +2,7 @@
  * Bloco reutilizável de campos de entrada de uma questão.
  * É usado tanto no modo livre quanto nas questões por disciplina.
  */
+import { memo } from "react";
 import type { Questao } from "../types/prova";
 import { VALORES_MAX_PROPOSICAO } from "../types/prova";
 import { exibirNumeroOuVazio } from "../utils/formatacao";
@@ -89,4 +90,8 @@ const CamposQuestao = ({
   );
 };
 
-export default CamposQuestao;
+export default memo(
+  CamposQuestao,
+  (propriedadesAnteriores, proximasPropriedades) =>
+    propriedadesAnteriores.questao === proximasPropriedades.questao,
+);

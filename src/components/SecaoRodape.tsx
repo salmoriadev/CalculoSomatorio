@@ -2,6 +2,7 @@
  * Rodapé informativo da simulação.
  * Mostra o resumo final e os créditos do projeto.
  */
+import { memo } from "react";
 import type { Resumo } from "../types/prova";
 import { formatarPontuacao } from "../utils/formatacao";
 
@@ -14,9 +15,9 @@ const SecaoRodape = ({ resumo }: PropriedadesSecaoRodape) => (
     <div>
       <h2>Resumo final</h2>
       <p>
-        Resultado objetivo: <strong>{formatarPontuacao(resumo.pontuacaoObjetiva)}</strong>{" "}
-        pontos. Total geral: <strong>{formatarPontuacao(resumo.total)}</strong>{" "}
-        pontos.
+        Resultado objetivo:{" "}
+        <strong>{formatarPontuacao(resumo.pontuacaoObjetiva)}</strong> pontos.
+        Total geral: <strong>{formatarPontuacao(resumo.total)}</strong> pontos.
       </p>
     </div>
 
@@ -41,7 +42,12 @@ const SecaoRodape = ({ resumo }: PropriedadesSecaoRodape) => (
             rel="noreferrer"
             aria-label="LinkedIn"
           >
-            <img src="/linkedin.png" alt="LinkedIn" />
+            <img
+              src="/linkedin.png"
+              alt="LinkedIn"
+              loading="lazy"
+              decoding="async"
+            />
           </a>
 
           <a
@@ -50,7 +56,12 @@ const SecaoRodape = ({ resumo }: PropriedadesSecaoRodape) => (
             rel="noreferrer"
             aria-label="GitHub"
           >
-            <img src="/github.webp" alt="GitHub" />
+            <img
+              src="/github.webp"
+              alt="GitHub"
+              loading="lazy"
+              decoding="async"
+            />
           </a>
         </div>
       </div>
@@ -58,4 +69,4 @@ const SecaoRodape = ({ resumo }: PropriedadesSecaoRodape) => (
   </footer>
 );
 
-export default SecaoRodape;
+export default memo(SecaoRodape);

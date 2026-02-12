@@ -3,10 +3,15 @@
  * Centraliza o estado global da simulação, conecta os painéis de UI
  * e aplica as regras de cálculo de pontuação/meta.
  */
-import { useEffect, useMemo, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import PainelControles from "./components/PainelControles";
-import PainelCurso from "./components/PainelCurso";
-import PainelQuestoesLivres from "./components/PainelQuestoesLivres";
 import SecaoPrincipal from "./components/SecaoPrincipal";
 import SecaoRodape from "./components/SecaoRodape";
 import SobreposicaoConfiguracao from "./components/SobreposicaoConfiguracao";
@@ -49,6 +54,10 @@ const LIMITE_PONTUACAO_ESPECIAL = 10;
 const TOTAL_OBJETIVA_FINAL = 80;
 const TOTAL_OBJETIVA_MEIO = 40;
 const QUANTIDADE_QUESTOES_INICIAL = 10;
+const PainelCurso = lazy(() => import("./components/PainelCurso"));
+const PainelQuestoesLivres = lazy(
+  () => import("./components/PainelQuestoesLivres"),
+);
 
 function App() {
   const [tema, setTema] = useState<"dark" | "light">(() => {
@@ -243,158 +252,170 @@ function App() {
     return estatisticasNotasCurso.maiorNota;
   }, [modoMeta, estatisticasNotasCurso, metaPersonalizada]);
 
-  const atualizarEstadoDisciplina = (
-    chaveDisciplina: ChaveDisciplina,
-    atualizador: (estadoAtual: EstadoDisciplina) => EstadoDisciplina,
-  ) => {
-    setEstadoDisciplinas((estadoAnterior) => ({
-      ...estadoAnterior,
-      [chaveDisciplina]: atualizador(estadoAnterior[chaveDisciplina]),
-    }));
-  };
+  const atualizarEstadoDisciplina = useCallback(
+    (
+      chaveDisciplina: ChaveDisciplina,
+      atualizador: (estadoAtual: EstadoDisciplina) => EstadoDisciplina,
+    ) => {
+      setEstadoDisciplinas((estadoAnterior) => ({
+        ...estadoAnterior,
+        [chaveDisciplina]: atualizador(estadoAnterior[chaveDisciplina]),
+      }));
+    },
+    [],
+  );
 
-  const regenerarQuestoesModoLivre = (
-    quantidade = quantidadeQuestoesModoLivre,
-  ) => {
+  const regenerarQuestoesModoLivre = useCallback((quantidade: number) => {
     const quantidadeSegura = Math.max(1, quantidade);
     setQuestoesModoLivre(construirQuestoes(quantidadeSegura));
-  };
+  }, []);
 
-  const zerarRespostasModoLivre = () => {
+  const zerarRespostasModoLivre = useCallback(() => {
     setQuestoesModoLivre((questoesAnteriores) =>
       questoesAnteriores.map((questao) => zerarRespostaQuestao(questao)),
     );
-  };
+  }, []);
 
-  const alterarQuestaoModoLivre = (
-    indiceQuestao: number,
-    campo: keyof Questao,
-    valor: string,
-  ) => {
-    setQuestoesModoLivre((questoesAnteriores) => {
-      return atualizarQuestaoNoIndice(
-        questoesAnteriores,
-        indiceQuestao,
-        (questaoAtual) => atualizarCampoQuestao(questaoAtual, campo, valor),
-      );
-    });
-  };
+  const alterarQuestaoModoLivre = useCallback(
+    (indiceQuestao: number, campo: keyof Questao, valor: string) => {
+      setQuestoesModoLivre((questoesAnteriores) => {
+        return atualizarQuestaoNoIndice(
+          questoesAnteriores,
+          indiceQuestao,
+          (questaoAtual) => atualizarCampoQuestao(questaoAtual, campo, valor),
+        );
+      });
+    },
+    [],
+  );
 
-  const alternarNotaDiretaQuestaoModoLivre = (
-    indiceQuestao: number,
-    ativo: boolean,
-  ) => {
-    setQuestoesModoLivre((questoesAnteriores) => {
-      return atualizarQuestaoNoIndice(
-        questoesAnteriores,
-        indiceQuestao,
-        (questaoAtual) => alternarNotaDiretaQuestao(questaoAtual, ativo),
-      );
-    });
-  };
+  const alternarNotaDiretaQuestaoModoLivre = useCallback(
+    (indiceQuestao: number, ativo: boolean) => {
+      setQuestoesModoLivre((questoesAnteriores) => {
+        return atualizarQuestaoNoIndice(
+          questoesAnteriores,
+          indiceQuestao,
+          (questaoAtual) => alternarNotaDiretaQuestao(questaoAtual, ativo),
+        );
+      });
+    },
+    [],
+  );
 
-  const alternarAberturaDisciplina = (chaveDisciplina: ChaveDisciplina) => {
-    atualizarEstadoDisciplina(chaveDisciplina, (estadoAtual) => ({
-      ...estadoAtual,
-      aberta: !estadoAtual.aberta,
-    }));
-  };
-
-  const alterarQuantidadeQuestoesDisciplina = (
-    chaveDisciplina: ChaveDisciplina,
-    valor: string,
-  ) => {
-    atualizarEstadoDisciplina(chaveDisciplina, (estadoAtual) => {
-      const proximaQuantidade = limitarInteiroNaoNegativo(
-        valor,
-        estadoAtual.quantidadeQuestoes,
-      );
-
-      const proximasQuestoes = Array.from(
-        { length: proximaQuantidade },
-        (_, indiceQuestao) =>
-          estadoAtual.questoes[indiceQuestao] ?? criarQuestao(),
-      );
-
-      return {
+  const alternarAberturaDisciplina = useCallback(
+    (chaveDisciplina: ChaveDisciplina) => {
+      atualizarEstadoDisciplina(chaveDisciplina, (estadoAtual) => ({
         ...estadoAtual,
-        quantidadeQuestoes: proximaQuantidade,
-        questoes: proximasQuestoes,
-      };
-    });
-  };
+        aberta: !estadoAtual.aberta,
+      }));
+    },
+    [atualizarEstadoDisciplina],
+  );
 
-  const alterarQuestaoDisciplina = (
-    chaveDisciplina: ChaveDisciplina,
-    indiceQuestao: number,
-    campo: keyof Questao,
-    valor: string,
-  ) => {
-    atualizarEstadoDisciplina(chaveDisciplina, (estadoAtual) => {
-      const proximasQuestoes = [...estadoAtual.questoes];
-      const questoesAtualizadas = atualizarQuestaoNoIndice(
-        proximasQuestoes,
-        indiceQuestao,
-        (questaoAtual) => atualizarCampoQuestao(questaoAtual, campo, valor),
-      );
-      return {
-        ...estadoAtual,
-        questoes: questoesAtualizadas,
-      };
-    });
-  };
+  const alterarQuantidadeQuestoesDisciplina = useCallback(
+    (chaveDisciplina: ChaveDisciplina, valor: string) => {
+      atualizarEstadoDisciplina(chaveDisciplina, (estadoAtual) => {
+        const proximaQuantidade = limitarInteiroNaoNegativo(
+          valor,
+          estadoAtual.quantidadeQuestoes,
+        );
 
-  const alternarNotaDiretaQuestaoDisciplina = (
-    chaveDisciplina: ChaveDisciplina,
-    indiceQuestao: number,
-    ativo: boolean,
-  ) => {
-    atualizarEstadoDisciplina(chaveDisciplina, (estadoAtual) => {
-      const questoesAtualizadas = atualizarQuestaoNoIndice(
-        estadoAtual.questoes,
-        indiceQuestao,
-        (questaoAtual) => alternarNotaDiretaQuestao(questaoAtual, ativo),
-      );
-      return {
-        ...estadoAtual,
-        questoes: questoesAtualizadas,
-      };
-    });
-  };
+        const proximasQuestoes = Array.from(
+          { length: proximaQuantidade },
+          (_, indiceQuestao) =>
+            estadoAtual.questoes[indiceQuestao] ?? criarQuestao(),
+        );
 
-  const zerarRespostasDisciplinas = (chaveDisciplina?: ChaveDisciplina) => {
-    setEstadoDisciplinas((estadoAnterior) => {
-      const proximoEstado = { ...estadoAnterior };
-
-      const chaves = chaveDisciplina
-        ? [chaveDisciplina]
-        : DISCIPLINAS_OBJETIVAS.map((disciplina) => disciplina.chave);
-
-      chaves.forEach((chaveAtual) => {
-        const disciplinaAtual = proximoEstado[chaveAtual];
-        proximoEstado[chaveAtual] = {
-          ...disciplinaAtual,
-          notaDiretaAtiva: false,
-          notaDireta: 0,
-          questoes: disciplinaAtual.questoes.map((questao) =>
-            zerarRespostaQuestao(questao),
-          ),
+        return {
+          ...estadoAtual,
+          quantidadeQuestoes: proximaQuantidade,
+          questoes: proximasQuestoes,
         };
       });
+    },
+    [atualizarEstadoDisciplina],
+  );
 
-      return proximoEstado;
-    });
-  };
+  const alterarQuestaoDisciplina = useCallback(
+    (
+      chaveDisciplina: ChaveDisciplina,
+      indiceQuestao: number,
+      campo: keyof Questao,
+      valor: string,
+    ) => {
+      atualizarEstadoDisciplina(chaveDisciplina, (estadoAtual) => {
+        const proximasQuestoes = [...estadoAtual.questoes];
+        const questoesAtualizadas = atualizarQuestaoNoIndice(
+          proximasQuestoes,
+          indiceQuestao,
+          (questaoAtual) => atualizarCampoQuestao(questaoAtual, campo, valor),
+        );
+        return {
+          ...estadoAtual,
+          questoes: questoesAtualizadas,
+        };
+      });
+    },
+    [atualizarEstadoDisciplina],
+  );
 
-  const zerarRespostas = () => {
+  const alternarNotaDiretaQuestaoDisciplina = useCallback(
+    (
+      chaveDisciplina: ChaveDisciplina,
+      indiceQuestao: number,
+      ativo: boolean,
+    ) => {
+      atualizarEstadoDisciplina(chaveDisciplina, (estadoAtual) => {
+        const questoesAtualizadas = atualizarQuestaoNoIndice(
+          estadoAtual.questoes,
+          indiceQuestao,
+          (questaoAtual) => alternarNotaDiretaQuestao(questaoAtual, ativo),
+        );
+        return {
+          ...estadoAtual,
+          questoes: questoesAtualizadas,
+        };
+      });
+    },
+    [atualizarEstadoDisciplina],
+  );
+
+  const zerarRespostasDisciplinas = useCallback(
+    (chaveDisciplina?: ChaveDisciplina) => {
+      setEstadoDisciplinas((estadoAnterior) => {
+        const proximoEstado = { ...estadoAnterior };
+
+        const chaves = chaveDisciplina
+          ? [chaveDisciplina]
+          : DISCIPLINAS_OBJETIVAS.map((disciplina) => disciplina.chave);
+
+        chaves.forEach((chaveAtual) => {
+          const disciplinaAtual = proximoEstado[chaveAtual];
+          proximoEstado[chaveAtual] = {
+            ...disciplinaAtual,
+            notaDiretaAtiva: false,
+            notaDireta: 0,
+            questoes: disciplinaAtual.questoes.map((questao) =>
+              zerarRespostaQuestao(questao),
+            ),
+          };
+        });
+
+        return proximoEstado;
+      });
+    },
+    [],
+  );
+
+  const zerarRespostas = useCallback(() => {
     if (modoLivreAtivo) {
       zerarRespostasModoLivre();
       return;
     }
     zerarRespostasDisciplinas();
-  };
+  }, [modoLivreAtivo, zerarRespostasDisciplinas, zerarRespostasModoLivre]);
 
-  const aplicarConfiguracaoInicial = () => {
+  const aplicarConfiguracaoInicial = useCallback(() => {
     setModoProva(modoConfiguracao);
 
     switch (modoConfiguracao) {
@@ -431,7 +452,100 @@ function App() {
     }
 
     setSobreposicaoAberta(false);
-  };
+  }, [modoConfiguracao, quantidadeQuestoesLivre, regenerarQuestoesModoLivre]);
+
+  const alterarQuantidadeQuestoesLivreConfiguracao = useCallback(
+    (valor: string) => {
+      setQuantidadeQuestoesLivre((quantidadeAtual) =>
+        limitarInteiroNaoNegativo(valor, quantidadeAtual),
+      );
+    },
+    [],
+  );
+
+  const alterarMetaPersonalizada = useCallback((valor: string) => {
+    setMetaPersonalizada((metaAtual) =>
+      limitarDecimalNaoNegativo(valor, metaAtual),
+    );
+  }, []);
+
+  const alternarTema = useCallback(() => {
+    setTema((temaAnterior) => (temaAnterior === "dark" ? "light" : "dark"));
+  }, []);
+
+  const alterarQuantidadeQuestoesModoLivre = useCallback((valor: string) => {
+    setQuantidadeQuestoesModoLivre((quantidadeAtual) =>
+      limitarInteiroNaoNegativo(valor, quantidadeAtual),
+    );
+  }, []);
+
+  const alterarTotalProvaObjetiva = useCallback((valor: string) => {
+    setTotalProvaObjetiva((valorAtual) =>
+      limitarDecimalNaoNegativo(valor, valorAtual),
+    );
+  }, []);
+
+  const alterarPontosDiscursivas = useCallback((valor: string) => {
+    setPontosDiscursivas((pontosAtuais) =>
+      Math.min(
+        LIMITE_PONTUACAO_ESPECIAL,
+        limitarDecimalNaoNegativo(valor, pontosAtuais),
+      ),
+    );
+  }, []);
+
+  const alterarPontosRedacao = useCallback((valor: string) => {
+    setPontosRedacao((pontosAtuais) =>
+      Math.min(
+        LIMITE_PONTUACAO_ESPECIAL,
+        limitarDecimalNaoNegativo(valor, pontosAtuais),
+      ),
+    );
+  }, []);
+
+  const gerarQuestoesModoLivre = useCallback(() => {
+    regenerarQuestoesModoLivre(quantidadeQuestoesModoLivre);
+  }, [quantidadeQuestoesModoLivre, regenerarQuestoesModoLivre]);
+
+  const abrirConfiguracao = useCallback(() => {
+    setSobreposicaoAberta(true);
+  }, []);
+
+  const alternarDiscursivas = useCallback((ativo: boolean) => {
+    setDiscursivasAtivas(ativo);
+    setPontosDiscursivas((pontosAtuais) => {
+      if (ativo && pontosAtuais === 0) return LIMITE_PONTUACAO_ESPECIAL;
+      return pontosAtuais;
+    });
+  }, []);
+
+  const alternarRedacao = useCallback((ativo: boolean) => {
+    setRedacaoAtiva(ativo);
+    setPontosRedacao((pontosAtuais) => {
+      if (ativo && pontosAtuais === 0) return LIMITE_PONTUACAO_ESPECIAL;
+      return pontosAtuais;
+    });
+  }, []);
+
+  const alterarNotaDiretaDisciplina = useCallback(
+    (chaveDisciplina: ChaveDisciplina, valor: string) => {
+      atualizarEstadoDisciplina(chaveDisciplina, (estadoAtual) => ({
+        ...estadoAtual,
+        notaDireta: limitarDecimalNaoNegativo(valor, estadoAtual.notaDireta),
+      }));
+    },
+    [atualizarEstadoDisciplina],
+  );
+
+  const alternarNotaDiretaDisciplina = useCallback(
+    (chaveDisciplina: ChaveDisciplina, ativo: boolean) => {
+      atualizarEstadoDisciplina(chaveDisciplina, (estadoAtual) => ({
+        ...estadoAtual,
+        notaDiretaAtiva: ativo,
+      }));
+    },
+    [atualizarEstadoDisciplina],
+  );
 
   return (
     <main className="app">
@@ -440,10 +554,8 @@ function App() {
         modoSelecionado={modoConfiguracao}
         quantidadeQuestoesLivre={quantidadeQuestoesLivre}
         onModoSelecionadoChange={setModoConfiguracao}
-        onQuantidadeQuestoesLivreChange={(valor) =>
-          setQuantidadeQuestoesLivre(
-            limitarInteiroNaoNegativo(valor, quantidadeQuestoesLivre),
-          )
+        onQuantidadeQuestoesLivreChange={
+          alterarQuantidadeQuestoesLivreConfiguracao
         }
         onAplicar={aplicarConfiguracaoInicial}
       />
@@ -454,17 +566,9 @@ function App() {
         pontuacaoMeta={pontuacaoMeta}
         resumo={resumo}
         valorMetaPersonalizada={metaPersonalizada}
-        onMetaPersonalizadaChange={(valor) =>
-          setMetaPersonalizada(
-            limitarDecimalNaoNegativo(valor, metaPersonalizada),
-          )
-        }
+        onMetaPersonalizadaChange={alterarMetaPersonalizada}
         onModoMetaChange={setModoMeta}
-        onTemaToggle={() =>
-          setTema((temaAnterior) =>
-            temaAnterior === "dark" ? "light" : "dark",
-          )
-        }
+        onTemaToggle={alternarTema}
       />
 
       <PainelControles
@@ -476,95 +580,50 @@ function App() {
         pontosRedacao={pontosRedacao}
         discursivasAtivas={discursivasAtivas}
         redacaoAtiva={redacaoAtiva}
-        onQuantidadeQuestoesLivreChange={(valor) =>
-          setQuantidadeQuestoesModoLivre(
-            limitarInteiroNaoNegativo(valor, quantidadeQuestoesModoLivre),
-          )
-        }
-        onTotalProvaObjetivaChange={(valor) =>
-          setTotalProvaObjetiva(
-            limitarDecimalNaoNegativo(valor, totalProvaObjetiva),
-          )
-        }
-        onPontosDiscursivasChange={(valor) =>
-          setPontosDiscursivas(
-            Math.min(
-              LIMITE_PONTUACAO_ESPECIAL,
-              limitarDecimalNaoNegativo(valor, pontosDiscursivas),
-            ),
-          )
-        }
-        onPontosRedacaoChange={(valor) =>
-          setPontosRedacao(
-            Math.min(
-              LIMITE_PONTUACAO_ESPECIAL,
-              limitarDecimalNaoNegativo(valor, pontosRedacao),
-            ),
-          )
-        }
-        onGerarQuestoes={() => regenerarQuestoesModoLivre()}
+        onQuantidadeQuestoesLivreChange={alterarQuantidadeQuestoesModoLivre}
+        onTotalProvaObjetivaChange={alterarTotalProvaObjetiva}
+        onPontosDiscursivasChange={alterarPontosDiscursivas}
+        onPontosRedacaoChange={alterarPontosRedacao}
+        onGerarQuestoes={gerarQuestoesModoLivre}
         onZerarRespostas={zerarRespostas}
-        onAbrirConfiguracao={() => setSobreposicaoAberta(true)}
-        onDiscursivasToggle={(ativo) => {
-          setDiscursivasAtivas(ativo);
-          if (ativo && pontosDiscursivas === 0) {
-            setPontosDiscursivas(LIMITE_PONTUACAO_ESPECIAL);
-          }
-        }}
-        onRedacaoToggle={(ativo) => {
-          setRedacaoAtiva(ativo);
-          if (ativo && pontosRedacao === 0) {
-            setPontosRedacao(LIMITE_PONTUACAO_ESPECIAL);
-          }
-        }}
+        onAbrirConfiguracao={abrirConfiguracao}
+        onDiscursivasToggle={alternarDiscursivas}
+        onRedacaoToggle={alternarRedacao}
       />
 
-      {!modoLivreAtivo ? (
-        <PainelCurso
-          cursos={cursos}
-          cursoSelecionado={cursoSelecionado}
-          codigoCursoSelecionado={codigoCursoSelecionado}
-          usarPesosIguais={usarPesosIguais}
-          somatorioPonderado={somatorioPonderado}
-          totaisDisciplinas={totaisDisciplinas}
-          estadoDisciplinas={estadoDisciplinas}
-          valorQuestao={valorQuestao}
-          exibirCortes={modoProva === "final"}
-          onCursoChange={setCodigoCursoSelecionado}
-          onPesosIguaisToggle={setUsarPesosIguais}
-          onDisciplinaAberturaToggle={alternarAberturaDisciplina}
-          onQuantidadeQuestoesDisciplinaChange={
-            alterarQuantidadeQuestoesDisciplina
-          }
-          onZerarRespostasDisciplina={zerarRespostasDisciplinas}
-          onNotaDiretaDisciplinaChange={(chaveDisciplina, valor) =>
-            atualizarEstadoDisciplina(chaveDisciplina, (estadoAtual) => ({
-              ...estadoAtual,
-              notaDireta: limitarDecimalNaoNegativo(
-                valor,
-                estadoAtual.notaDireta,
-              ),
-            }))
-          }
-          onNotaDiretaDisciplinaToggle={(chaveDisciplina, ativo) =>
-            atualizarEstadoDisciplina(chaveDisciplina, (estadoAtual) => ({
-              ...estadoAtual,
-              notaDiretaAtiva: ativo,
-            }))
-          }
-          onQuestaoDisciplinaChange={alterarQuestaoDisciplina}
-          onNotaDiretaQuestaoToggle={alternarNotaDiretaQuestaoDisciplina}
-        />
-      ) : null}
-
-      {modoLivreAtivo ? (
-        <PainelQuestoesLivres
-          questoes={questoesModoLivre}
-          pontuacoesQuestoes={resumo.pontuacoes}
-          onQuestaoChange={alterarQuestaoModoLivre}
-          onNotaDiretaQuestaoToggle={alternarNotaDiretaQuestaoModoLivre}
-        />
-      ) : null}
+      <Suspense fallback={null}>
+        {!modoLivreAtivo ? (
+          <PainelCurso
+            cursos={cursos}
+            cursoSelecionado={cursoSelecionado}
+            codigoCursoSelecionado={codigoCursoSelecionado}
+            usarPesosIguais={usarPesosIguais}
+            somatorioPonderado={somatorioPonderado}
+            totaisDisciplinas={totaisDisciplinas}
+            estadoDisciplinas={estadoDisciplinas}
+            valorQuestao={valorQuestao}
+            exibirCortes={modoProva === "final"}
+            onCursoChange={setCodigoCursoSelecionado}
+            onPesosIguaisToggle={setUsarPesosIguais}
+            onDisciplinaAberturaToggle={alternarAberturaDisciplina}
+            onQuantidadeQuestoesDisciplinaChange={
+              alterarQuantidadeQuestoesDisciplina
+            }
+            onZerarRespostasDisciplina={zerarRespostasDisciplinas}
+            onNotaDiretaDisciplinaChange={alterarNotaDiretaDisciplina}
+            onNotaDiretaDisciplinaToggle={alternarNotaDiretaDisciplina}
+            onQuestaoDisciplinaChange={alterarQuestaoDisciplina}
+            onNotaDiretaQuestaoToggle={alternarNotaDiretaQuestaoDisciplina}
+          />
+        ) : (
+          <PainelQuestoesLivres
+            questoes={questoesModoLivre}
+            pontuacoesQuestoes={resumo.pontuacoes}
+            onQuestaoChange={alterarQuestaoModoLivre}
+            onNotaDiretaQuestaoToggle={alternarNotaDiretaQuestaoModoLivre}
+          />
+        )}
+      </Suspense>
 
       <SecaoRodape resumo={resumo} />
     </main>
