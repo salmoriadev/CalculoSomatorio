@@ -1035,7 +1035,17 @@ button:active {
     }
 
     .topbar-credits {
+        display: inline-flex;
+    }
+
+    .topbar-credits > span,
+    .topbar-credits > a {
         display: none;
+    }
+
+    .site-header-actions {
+        width: 100%;
+        justify-content: flex-end;
     }
 
     .discipline-controls {
@@ -1086,9 +1096,13 @@ button:active {
         align-items: flex-start;
     }
 
+    .site-header-actions {
+        justify-content: space-between;
+    }
+
     .theme-toggle {
-        width: 100%;
-        justify-content: center;
+        width: auto;
+        justify-content: flex-start;
     }
 
     .logo-badge {
